@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <title>Prakalpa</title>
+  </head>
+
+  <style>
+    #results {
+      margin-top: 20px;
+      border: 1px solid black;
+      width: 600px;
+      height: 500px;
+    }
+  </style>
+
+  <body>
+    <textarea rows=10 cols=100 id='code'></textarea>
+
+    <div>
+      <button id='load'>Load</button>
+      <button id='get-next-token'>Get Next Token</button>
+    </div>
+
+    <textarea id='results' readonly></textarea>
+
+    <script>
+      var packagePath = location.pathname.replace(/\/[^/]*$/, ''); 
+      window.dojoConfig = {
+        async: true,
+        packages: [
+          {
+            name: 'prakalpa',
+            location:  packagePath + '/src'
+          },
+          {
+            name: 'dojo',
+            location: packagePath + '/vendor/dojo'
+          }
+        ]
+      };
+    </script>
+
+    <script src='//ajax.googleapis.com/ajax/libs/dojo/1.10.4/dojo/dojo.js'></script>
+
+    <script>
+      require([
+        'prakalpa',
+        'dojo/query',
+        'dojo/NodeList-manipulate'
+      ], function (Prakalpa, query) {
+        var interpreter;
+
+        interpreter = new Prakalpa();
+
+        query('#load').on('click', function () {
+          interpreter.load(query('#code').val(), '#results');
+        });
+
+        query('#get-next-token').on('click', function () {
+          interpreter.getNextToken();
+        });
+      });
+    </script>
+
+  </body>
+</html>
