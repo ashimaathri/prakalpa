@@ -88,7 +88,6 @@ define([
         } else {
           break;
         }
-
         c = this.getNextChar();
 
         if(c === '"' || c === "'") {
@@ -162,7 +161,7 @@ define([
         return {
           token: Tokens.NEWLINE,
           start: this.startOfToken,
-          end: this.charIndex + 1
+          end: this.charIndex
         };
       }
 
@@ -173,7 +172,7 @@ define([
       if(c === '.') {
         c = this.getNextChar();
         if(this.isDigit(c)) {
-          return fraction(c);
+          return fraction();
         } else if(c === '.') {
           c = this.getNextChar();
           if(c === '.') {
@@ -206,10 +205,10 @@ define([
         if(c === '0') {
           c = this.getNextChar();
           if(c === '.') {
-            return this.fraction(c);
+            return this.fraction();
           }
           if(c === 'j' || c === 'J') {
-            return this.imaginary(c);
+            return this.imaginary();
           }
           if(c === 'x' || c === 'X') {
             c = this.getNextChar();
@@ -259,11 +258,11 @@ define([
               c = this.getNextChar();
             }
             if(c === '.') {
-              return fraction(c);
+              return fraction();
             } else if(c === 'e' || c === 'E') {
               return exponent();
             } else if(c === 'j' || c === 'J') {
-              return imaginary(c);
+              return imaginary();
             } else if (nonZero) {
               this.backupOneChar();
               return {
@@ -278,7 +277,7 @@ define([
           } while (this.isDigit(c));
 
           if(c === '.') {
-            return this.fraction(c);
+            return this.fraction();
           }
         }
       }
@@ -295,7 +294,7 @@ define([
       }
 
       if(c === 'j' || c === 'J') {
-        return imaginary(c);
+        return imaginary();
       }
 
       this.backupOneChar();
@@ -331,7 +330,7 @@ define([
       } while(this.isDigit(c));
 
       if(c === 'j' || c === 'J') {
-        return this.imaginary(c);
+        return this.imaginary();
       }
 
       this.backupOneChar();
@@ -342,7 +341,7 @@ define([
       };
     },
 
-    imaginary: function (c) {
+    imaginary: function () {
       return {
         token: NUMBER,
         start: this.startOfToken,
@@ -493,10 +492,10 @@ define([
       var col;
 
       col = 0;
-      c = this.getNextChar();
 
       // Supporting only whitespace for now.
       // TODO Add support for tabs and form-feed
+      c = this.getNextChar();
       while(c === ' ') {
         col++;
         c = this.getNextChar();
@@ -537,8 +536,8 @@ define([
 
       charCode = c.charCodeAt(0);
       return (isDigit(c) || 
-             (charCode >= 65 && charCode <= 70) || //A to F
-             (charCode >= 97 && charCode <= 102)); //a to f
+             (charCode >= 65 && charCode <= 70) || // A to F
+             (charCode >= 97 && charCode <= 102)); // a to f
     },
 
     oneCharToken: function (c) {
