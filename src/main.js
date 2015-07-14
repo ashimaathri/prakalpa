@@ -17,14 +17,24 @@ define([
     },
 
     getNextToken: function () {
-      var tokenInfo, origText;
+      this.populateTextBox(this.tokenizer.getNext());
+    },
 
-      tokenInfo = this.tokenizer.getNext();
-      origText = this.resultElt.text();
-      this.resultElt.text(origText +
+    populateTextBox: function (tokenInfo) {
+      this.resultElt.text(this.resultElt.text() +
           tokenInfo.token +
           (typeof(tokenInfo.start) !== 'undefined' ? ' Start:' + tokenInfo.start + ' End:' + tokenInfo.end : '') +
+          (typeof(tokenInfo.error) !== 'undefined' ? ' ' + tokenInfo.error : '') +
           '\n');
+    },
+
+    getAllTokens: function () {
+      var tokenInfo;
+
+      do {
+        tokenInfo = this.tokenizer.getNext();
+        this.populateTextBox(tokenInfo);
+      } while(tokenInfo.token != 'ENDMARKER');
     }
   });
 });

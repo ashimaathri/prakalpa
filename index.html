@@ -21,6 +21,7 @@
     <div>
       <button id='load'>Load</button>
       <button id='get-next-token'>Get Next Token</button>
+      <button id='get-all-tokens'>Get All Tokens</button>
     </div>
 
     <textarea id='results' readonly></textarea>
@@ -60,6 +61,9 @@
 
         query('#get-next-token').on('click', function () {
           interpreter.getNextToken();
+        });
+        query('#get-all-tokens').on('click', function () {
+          interpreter.getAllTokens();
         });
       });
     </script>

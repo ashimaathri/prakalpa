@@ -91,7 +91,7 @@ define([
         c = this.getNextChar();
 
         if(c === '"' || c === "'") {
-          return letterQuote(c);
+          return this.letterQuote(c);
         }
       }
 
@@ -172,7 +172,7 @@ define([
       if(c === '.') {
         c = this.getNextChar();
         if(this.isDigit(c)) {
-          return fraction();
+          return this.fraction();
         } else if(c === '.') {
           c = this.getNextChar();
           if(c === '.') {
@@ -199,7 +199,7 @@ define([
     },
 
     isNumber: function (c) {
-      var charCode, nonZero;
+      var nonZero;
 
       if(this.isDigit(c)) {
         if(c === '0') {
@@ -212,10 +212,10 @@ define([
           }
           if(c === 'x' || c === 'X') {
             c = this.getNextChar();
-            if(!isXDigit(c)) {
+            if(!this.isXDigit(c)) {
               this.backupOneChar();
               return {
-                error: Error.TOKEN,
+                error: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN
               };
             }
@@ -228,20 +228,19 @@ define([
             if(charCode < 48 || charCode >= 56) { // Only '0' to '7' are allowed
               this.backupOneChar();
               return {
-                error: Error.TOKEN,
+                error: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN
               };
             }
             do {
               c = this.getNextChar();
-              charCode = c.charCodeAt(0);
-            } while (48 <= charCode && charCode < 56);
+            } while (c && 48 <= c.charCodeAt(0) && c.charCodeAt(0) < 56);
           } else if(c == 'b' || c =='B') {
             c = this.getNextChar();
             if(c !== '0' && c !== '1') {
               this.backupOneChar();
               return {
-                error: Error.TOKEN,
+                error: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN
               };
             }
@@ -258,15 +257,15 @@ define([
               c = this.getNextChar();
             }
             if(c === '.') {
-              return fraction();
+              return this.fraction();
             } else if(c === 'e' || c === 'E') {
-              return exponent();
+              return this.exponent();
             } else if(c === 'j' || c === 'J') {
-              return imaginary();
+              return this.imaginary();
             } else if (nonZero) {
               this.backupOneChar();
               return {
-                error: Error.TOKEN,
+                error: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN
               };
             }
@@ -279,7 +278,21 @@ define([
           if(c === '.') {
             return this.fraction();
           }
+
+          if(c === 'e' || c === 'E') {
+            return this.exponent();
+          }
+
+          if(c === 'j' || c === 'J') {
+            return this.imaginary();
+          }
         }
+        this.backupOneChar();
+        return {
+          token: Tokens.NUMBER,
+          start: this.startOfToken,
+          end: this.charIndex + 1
+        };
       }
       return this.letterQuote(c);
     },
@@ -290,11 +303,11 @@ define([
       } while (this.isDigit(c));
 
       if(c === 'e' || c === 'E') {
-        return exponent();
+        return this.exponent();
       }
 
       if(c === 'j' || c === 'J') {
-        return imaginary();
+        return this.imaginary();
       }
 
       this.backupOneChar();
@@ -312,7 +325,7 @@ define([
         if(!this.isDigit(c)) {
           this.backupOneChar();
           return {
-            error: Error.TOKEN,
+            error: Errors.TOKEN,
             token: Tokens.ERRORTOKEN
           };
         }
@@ -375,13 +388,13 @@ define([
           c = this.getNextChar();
           if(!c) {
             if(quoteSize === 3) {
-              return { error: Error.EOFS, token: Tokens.ERRORTOKEN };
+              return { error: Errors.EOFS, token: Tokens.ERRORTOKEN };
             } else {
-              return { error: Error.EOLS, token: Tokens.ERRORTOKEN };
+              return { error: Errors.EOLS, token: Tokens.ERRORTOKEN };
             }
           }
           if(quoteSize === 1 && c === '\n') {
-            return { error: Error.EOLS, token: Tokens.ERRORTOKEN };
+            return { error: Errors.EOLS, token: Tokens.ERRORTOKEN };
           }
           if(c === quote) {
             endQuoteSize += 1;
@@ -407,7 +420,7 @@ define([
       if(c === '\\') {
         c = this.getNextChar();
         if(c !== '\n') {
-          return { error: Error.LINECONT, token: Tokens.ERRORTOKEN };
+          return { error: Errors.LINECONT, token: Tokens.ERRORTOKEN };
         }
         this.contLine = true;
         return this.again();
@@ -468,6 +481,7 @@ define([
     isPotentialIdentifierStart: function (c) {
       var code;
 
+      if(typeof(c) === 'undefined') { return false; }
       code = c.charCodeAt(0);
 
       return ((code > 64 && code < 91)  || // Uppercase
@@ -479,6 +493,7 @@ define([
     isPotentialIdentifierChar: function (c) {
       var code;
 
+      if(typeof(c) === 'undefined') { return false; }
       code = c.charCodeAt(0);
 
       return ((code > 64 && code < 91)  || // Uppercase
@@ -528,14 +543,19 @@ define([
     },
 
     isDigit: function (c) {
-      return !isNaN(c);
+      var charCode;
+
+      if(typeof(c) === 'undefined') { return false; }
+      charCode = c.charCodeAt(0);
+      return (charCode > 47 && charCode < 58);
     },
 
     isXDigit: function (c) {
       var charCode;
 
+      if(typeof(c) === 'undefined') { return false; }
       charCode = c.charCodeAt(0);
-      return (isDigit(c) || 
+      return (this.isDigit(c) || 
              (charCode >= 65 && charCode <= 70) || // A to F
              (charCode >= 97 && charCode <= 102)); // a to f
     },
