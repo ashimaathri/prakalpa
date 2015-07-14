@@ -95,7 +95,7 @@ define([
         }
       }
 
-      while (isPotentialIdentifierChar(c)) {
+      while (this.isPotentialIdentifierChar(c)) {
         if(c.charCodeAt(0) >= 128) {
           nonascii = true;
         }
@@ -150,13 +150,13 @@ define([
         return { token: Tokens.ENDMARKER };
       }
 
-      if(isPotentialIdentifierStart(c)) {
+      if(this.isPotentialIdentifierStart(c)) {
         return this.processNames(c);
       }
 
       if(c === '\n') {
         this.atBeginningOfLine = true;
-        if(this.blankline || this.level > 0) { return nextline(); }
+        if(this.blankline || this.level > 0) { return this.nextline(); }
         this.contLine = false;
         return {
           token: Tokens.NEWLINE,
@@ -177,7 +177,7 @@ define([
           c = this.getNextChar();
           if(c === '.') {
             return {
-              token: Token.ELLIPSIS,
+              token: Tokens.ELLIPSIS,
               start: this.startOfToken,
               end: this.charIndex + 1
             };
@@ -189,7 +189,7 @@ define([
           this.backupOneChar();
         }
         return {
-          token: Token.DOT,
+          token: Tokens.DOT,
           start: this.startOfToken,
           end: this.charIndex + 1
         };
@@ -216,7 +216,7 @@ define([
               this.backupOneChar();
               return {
                 error: Error.TOKEN,
-                token: Token.ERRORTOKEN
+                token: Tokens.ERRORTOKEN
               };
             }
             do {
@@ -229,7 +229,7 @@ define([
               this.backupOneChar();
               return {
                 error: Error.TOKEN,
-                token: Token.ERRORTOKEN
+                token: Tokens.ERRORTOKEN
               };
             }
             do {
@@ -242,7 +242,7 @@ define([
               this.backupOneChar();
               return {
                 error: Error.TOKEN,
-                token: Token.ERRORTOKEN
+                token: Tokens.ERRORTOKEN
               };
             }
             do {
@@ -267,7 +267,7 @@ define([
               this.backupOneChar();
               return {
                 error: Error.TOKEN,
-                token: Token.ERRORTOKEN
+                token: Tokens.ERRORTOKEN
               };
             }
           }
@@ -299,7 +299,7 @@ define([
 
       this.backupOneChar();
       return {
-        token: NUMBER,
+        token: Tokens.NUMBER,
         start: this.startOfToken,
         end: this.charIndex + 1
       };
@@ -313,14 +313,14 @@ define([
           this.backupOneChar();
           return {
             error: Error.TOKEN,
-            token: Token.ERRORTOKEN
+            token: Tokens.ERRORTOKEN
           };
         }
       } else if(!this.isDigit(c)) {
         this.backupOneChar();
         this.backupOneChar();
         return {
-          token: Token.NUMBER,
+          token: Tokens.NUMBER,
           start: this.startOfToken,
           end: this.charIndex + 1
         };
@@ -335,7 +335,7 @@ define([
 
       this.backupOneChar();
       return {
-        token: NUMBER,
+        token: Tokens.NUMBER,
         start: this.startOfToken,
         end: this.charIndex + 1
       };
@@ -343,7 +343,7 @@ define([
 
     imaginary: function () {
       return {
-        token: NUMBER,
+        token: Tokens.NUMBER,
         start: this.startOfToken,
         end: this.charIndex + 1
       };
@@ -375,13 +375,13 @@ define([
           c = this.getNextChar();
           if(!c) {
             if(quoteSize === 3) {
-              return { error: Error.EOFS, token: Token.ERRORTOKEN };
+              return { error: Error.EOFS, token: Tokens.ERRORTOKEN };
             } else {
-              return { error: Error.EOLS, token: Token.ERRORTOKEN };
+              return { error: Error.EOLS, token: Tokens.ERRORTOKEN };
             }
           }
           if(quoteSize === 1 && c === '\n') {
-            return { error: Error.EOLS, token: Token.ERRORTOKEN };
+            return { error: Error.EOLS, token: Tokens.ERRORTOKEN };
           }
           if(c === quote) {
             endQuoteSize += 1;
@@ -394,7 +394,7 @@ define([
         }
 
         return {
-          token: Token.STRING,
+          token: Tokens.STRING,
           start: this.startOfToken,
           end: this.charIndex + 1
         };
@@ -407,7 +407,7 @@ define([
       if(c === '\\') {
         c = this.getNextChar();
         if(c !== '\n') {
-          return { error: Error.LINECONT, token: Token.ERRORTOKEN };
+          return { error: Error.LINECONT, token: Tokens.ERRORTOKEN };
         }
         this.contLine = true;
         return this.again();
@@ -421,10 +421,10 @@ define([
 
       c2 = this.getNextChar();
       token = this.twoCharToken(c, c2);
-      if(token !== Token.OP) {
+      if(token !== Tokens.OP) {
         c3 = this.getNextChar();
         token3 = this.threeCharToken(c, c2, c3);
-        if(token3 !== Token.OP) {
+        if(token3 !== Tokens.OP) {
           token = token3;
         } else {
           this.backupOneChar();
@@ -542,30 +542,30 @@ define([
 
     oneCharToken: function (c) {
       switch (c) {
-        case '(':           return Token.LPAR;
-        case ')':           return Token.RPAR;
-        case '[':           return Token.LSQB;
-        case ']':           return Token.RSQB;
-        case ':':           return Token.COLON;
-        case ',':           return Token.COMMA;
-        case ';':           return Token.SEMI;
-        case '+':           return Token.PLUS;
-        case '-':           return Token.MINUS;
-        case '*':           return Token.STAR;
-        case '/':           return Token.SLASH;
-        case '|':           return Token.VBAR;
-        case '&':           return Token.AMPER;
-        case '<':           return Token.LESS;
-        case '>':           return Token.GREATER;
-        case '=':           return Token.EQUAL;
-        case '.':           return Token.DOT;
-        case '%':           return Token.PERCENT;
-        case '{':           return Token.LBRACE;
-        case '}':           return Token.RBRACE;
-        case '^':           return Token.CIRCUMFLEX;
-        case '~':           return Token.TILDE;
-        case '@':           return Token.AT;
-        default:            return Token.OP;
+        case '(':           return Tokens.LPAR;
+        case ')':           return Tokens.RPAR;
+        case '[':           return Tokens.LSQB;
+        case ']':           return Tokens.RSQB;
+        case ':':           return Tokens.COLON;
+        case ',':           return Tokens.COMMA;
+        case ';':           return Tokens.SEMI;
+        case '+':           return Tokens.PLUS;
+        case '-':           return Tokens.MINUS;
+        case '*':           return Tokens.STAR;
+        case '/':           return Tokens.SLASH;
+        case '|':           return Tokens.VBAR;
+        case '&':           return Tokens.AMPER;
+        case '<':           return Tokens.LESS;
+        case '>':           return Tokens.GREATER;
+        case '=':           return Tokens.EQUAL;
+        case '.':           return Tokens.DOT;
+        case '%':           return Tokens.PERCENT;
+        case '{':           return Tokens.LBRACE;
+        case '}':           return Tokens.RBRACE;
+        case '^':           return Tokens.CIRCUMFLEX;
+        case '~':           return Tokens.TILDE;
+        case '@':           return Tokens.AT;
+        default:            return Tokens.OP;
       }
     },
 
@@ -573,77 +573,77 @@ define([
       switch (c1) {
         case '=':
           switch (c2) {
-            case '=':               return Token.EQEQUAL;
+            case '=':               return Tokens.EQEQUAL;
           }
           break;
         case '!':
           switch (c2) {
-            case '=':               return Token.NOTEQUAL;
+            case '=':               return Tokens.NOTEQUAL;
           }
           break;
         case '<':
           switch (c2) {
-            case '>':               return Token.NOTEQUAL;
-            case '=':               return Token.LESSEQUAL;
-            case '<':               return Token.LEFTSHIFT;
+            case '>':               return Tokens.NOTEQUAL;
+            case '=':               return Tokens.LESSEQUAL;
+            case '<':               return Tokens.LEFTSHIFT;
           }
           break;
         case '>':
           switch (c2) {
-            case '=':               return Token.GREATEREQUAL;
-            case '>':               return Token.RIGHTSHIFT;
+            case '=':               return Tokens.GREATEREQUAL;
+            case '>':               return Tokens.RIGHTSHIFT;
           }
           break;
         case '+':
           switch (c2) {
-            case '=':               return Token.PLUSEQUAL;
+            case '=':               return Tokens.PLUSEQUAL;
           }
           break;
         case '-':
           switch (c2) {
-            case '=':               return Token.MINEQUAL;
-            case '>':               return Token.RARROW;
+            case '=':               return Tokens.MINEQUAL;
+            case '>':               return Tokens.RARROW;
           }
           break;
         case '*':
           switch (c2) {
-            case '*':               return Token.DOUBLESTAR;
-            case '=':               return Token.STAREQUAL;
+            case '*':               return Tokens.DOUBLESTAR;
+            case '=':               return Tokens.STAREQUAL;
           }
           break;
         case '/':
           switch (c2) {
-            case '/':               return Token.DOUBLESLASH;
-            case '=':               return Token.SLASHEQUAL;
+            case '/':               return Tokens.DOUBLESLASH;
+            case '=':               return Tokens.SLASHEQUAL;
           }
           break;
         case '|':
           switch (c2) {
-            case '=':               return Token.VBAREQUAL;
+            case '=':               return Tokens.VBAREQUAL;
           }
           break;
         case '%':
           switch (c2) {
-            case '=':               return Token.PERCENTEQUAL;
+            case '=':               return Tokens.PERCENTEQUAL;
           }
           break;
         case '&':
           switch (c2) {
-            case '=':               return Token.AMPEREQUAL;
+            case '=':               return Tokens.AMPEREQUAL;
           }
           break;
         case '^':
           switch (c2) {
-            case '=':               return Token.CIRCUMFLEXEQUAL;
+            case '=':               return Tokens.CIRCUMFLEXEQUAL;
           }
           break;
         case '@':
           switch (c2) {
-            case '=':               return Token.ATEQUAL;
+            case '=':               return Tokens.ATEQUAL;
           }
           break;
       }
-      return Token.OP;
+      return Tokens.OP;
     },
 
     threeCharToken: function (c1, c2, c3) {
@@ -653,7 +653,7 @@ define([
             case '<':
               switch (c3) {
                 case '=':
-                  return Token.LEFTSHIFTEQUAL;
+                  return Tokens.LEFTSHIFTEQUAL;
               }
               break;
           }
@@ -663,7 +663,7 @@ define([
             case '>':
               switch (c3) {
                 case '=':
-                  return Token.RIGHTSHIFTEQUAL;
+                  return Tokens.RIGHTSHIFTEQUAL;
               }
               break;
           }
@@ -673,7 +673,7 @@ define([
             case '*':
               switch (c3) {
                 case '=':
-                  return Token.DOUBLESTAREQUAL;
+                  return Tokens.DOUBLESTAREQUAL;
               }
               break;
           }
@@ -683,7 +683,7 @@ define([
             case '/':
               switch (c3) {
                 case '=':
-                  return Token.DOUBLESLASHEQUAL;
+                  return Tokens.DOUBLESLASHEQUAL;
               }
               break;
           }
@@ -693,13 +693,13 @@ define([
             case '.':
               switch (c3) {
                 case '.':
-                  return Token.ELLIPSIS;
+                  return Tokens.ELLIPSIS;
               }
               break;
           }
           break;
       }
-      return Token.OP;
+      return Tokens.OP;
     }
   });
 });

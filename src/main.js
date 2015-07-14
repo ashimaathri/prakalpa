@@ -23,7 +23,7 @@ define([
       origText = this.resultElt.text();
       this.resultElt.text(origText +
           tokenInfo.token +
-          (tokenInfo.start ? ' Start:' + tokenInfo.start + ' End:' + tokenInfo.end : '') +
+          (typeof(tokenInfo.start) !== 'undefined' ? ' Start:' + tokenInfo.start + ' End:' + tokenInfo.end : '') +
           '\n');
     }
   });
