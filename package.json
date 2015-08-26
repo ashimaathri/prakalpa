@@ -1,0 +1,31 @@
+{
+  "name": "prakalpa",
+  "version": "0.0.0",
+  "description": "Python to JS transcompiler written in JS",
+  "main": "src/main.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "intern": "^3.0.0"
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ashimaathri/prakalpa.git"
+  },
+  "keywords": [
+    "transcompiler",
+    "Python",
+    "JavaScript"
+  ],
+  "author": "Ashima Athri",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ashimaathri/prakalpa/issues"
+  },
+  "homepage": "https://github.com/ashimaathri/prakalpa"
+}
