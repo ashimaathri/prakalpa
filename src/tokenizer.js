@@ -1,3 +1,7 @@
+/*
+ * This is a port of cpython's tokenizer, Parser/tokenizer.c,
+ * in particular, the tok_get function.
+ */
 define([
   'dojo/_base/declare',
   'dojo/_base/lang',
