@@ -17,10 +17,10 @@ define([
     },
 
     getNextToken: function () {
-      this.populateTextBox(this.tokenizer.getNext());
+      this.appendToTextBox(this.tokenizer.getNext());
     },
 
-    populateTextBox: function (tokenInfo) {
+    appendToTextBox: function (tokenInfo) {
       this.resultElt.text(this.resultElt.text() +
           tokenInfo.token +
           (typeof(tokenInfo.start) !== 'undefined' ? ' Start:' + tokenInfo.start + ' End:' + tokenInfo.end : '') +
@@ -33,7 +33,7 @@ define([
 
       do {
         tokenInfo = this.tokenizer.getNext();
-        this.populateTextBox(tokenInfo);
+        this.appendToTextBox(tokenInfo);
       } while(tokenInfo.token != 'ENDMARKER');
     }
   });
