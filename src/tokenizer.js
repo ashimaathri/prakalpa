@@ -12,12 +12,9 @@ define([
     constructor: function (opts) {
       lang.mixin(this, opts);
       this.atBeginningOfLine = true;
-      this.level = 0;
+      this.level = 0; // Parenthesis nesting level
       this.indstack = [0];
       this.indent = 0;
-      this.deftypestack = [0];
-      this.defstack = [0];
-      this.def = 0;
       this.pending = 0;
       this.charIndex = -1;
       this.startOfToken = 0;
@@ -55,25 +52,25 @@ define([
       if(this.pending !== 0) {
         if(this.pending < 0) {
           this.pending++;
-          while(this.def && this.defstack[this.def] >= this.indent) {
-            this.def--;
-          }
           return { token: Tokens.DEDENT };
         } else {
           this.pending--;
           return { token: Tokens.INDENT }; 
         }
       }
+
+      // TODO Add support for async
+
       return this.again();
     },
 
     verifyIdentifier: function () {
-      //WHAT IS THIS? FIXME
-      return true;
+      // TODO Add support for Unicode
+      return false;
     },
 
     processNames: function (c) {
-      var nonascii, saw_b, saw_r, saw_u, len, tokenStr;
+      var nonascii, saw_b, saw_r, saw_u;
 
       nonascii = false;
       saw_b = saw_r = saw_u = false;
@@ -106,23 +103,6 @@ define([
 
       if(nonascii && !this.verifyIdentifier()) {
         return { token: Tokens.ERRORTOKEN };
-      }
-
-      len = this.charIndex + 1 - this.startOfToken;
-
-      tokenStr = this.sourceText.substring(this.startOfToken, this.charIndex + 1);
-
-      if(len === 3 && tokenStr === 'def') {
-        if(this.def && this.deftypestack[this.def] === 3) {
-          this.deftypestack[this.def] = 2;
-        } else if(this.defstack[this.def] < this.indent) {
-          if(this.def + 1 >= MAXINDENT) {
-            return { error: Errors.TOODEEP, token: Tokens.ERRORTOKEN };
-          }
-          this.def++;
-          this.defstack[this.def] = this.indent;
-          this.deftypestack[this.def] = 1;
-        }
       }
 
       //TODO Add support for async
@@ -523,6 +503,9 @@ define([
         this.blankline = true;
       }
 
+      // I think altcol, altindstack etc. are to check if tabs and spaces
+      // are being used inconsistently in indentation.
+      // As we don't support tabs anyway, I'm skipping that part of the code
       if(!this.blankline && this.level === 0) {
         if(col > this.indstack[this.indent]) {
           if(this.indent + 1 >= MAXINDENT) {
@@ -593,73 +576,73 @@ define([
       switch (c1) {
         case '=':
           switch (c2) {
-            case '=':               return Tokens.EQEQUAL;
+            case '=': return Tokens.EQEQUAL;
           }
           break;
         case '!':
           switch (c2) {
-            case '=':               return Tokens.NOTEQUAL;
+            case '=': return Tokens.NOTEQUAL;
           }
           break;
         case '<':
           switch (c2) {
-            case '>':               return Tokens.NOTEQUAL;
-            case '=':               return Tokens.LESSEQUAL;
-            case '<':               return Tokens.LEFTSHIFT;
+            case '>': return Tokens.NOTEQUAL;
+            case '=': return Tokens.LESSEQUAL;
+            case '<': return Tokens.LEFTSHIFT;
           }
           break;
         case '>':
           switch (c2) {
-            case '=':               return Tokens.GREATEREQUAL;
-            case '>':               return Tokens.RIGHTSHIFT;
+            case '=': return Tokens.GREATEREQUAL;
+            case '>': return Tokens.RIGHTSHIFT;
           }
           break;
         case '+':
           switch (c2) {
-            case '=':               return Tokens.PLUSEQUAL;
+            case '=': return Tokens.PLUSEQUAL;
           }
           break;
         case '-':
           switch (c2) {
-            case '=':               return Tokens.MINEQUAL;
-            case '>':               return Tokens.RARROW;
+            case '=': return Tokens.MINEQUAL;
+            case '>': return Tokens.RARROW;
           }
           break;
         case '*':
           switch (c2) {
-            case '*':               return Tokens.DOUBLESTAR;
-            case '=':               return Tokens.STAREQUAL;
+            case '*': return Tokens.DOUBLESTAR;
+            case '=': return Tokens.STAREQUAL;
           }
           break;
         case '/':
           switch (c2) {
-            case '/':               return Tokens.DOUBLESLASH;
-            case '=':               return Tokens.SLASHEQUAL;
+            case '/': return Tokens.DOUBLESLASH;
+            case '=': return Tokens.SLASHEQUAL;
           }
           break;
         case '|':
           switch (c2) {
-            case '=':               return Tokens.VBAREQUAL;
+            case '=': return Tokens.VBAREQUAL;
           }
           break;
         case '%':
           switch (c2) {
-            case '=':               return Tokens.PERCENTEQUAL;
+            case '=': return Tokens.PERCENTEQUAL;
           }
           break;
         case '&':
           switch (c2) {
-            case '=':               return Tokens.AMPEREQUAL;
+            case '=': return Tokens.AMPEREQUAL;
           }
           break;
         case '^':
           switch (c2) {
-            case '=':               return Tokens.CIRCUMFLEXEQUAL;
+            case '=': return Tokens.CIRCUMFLEXEQUAL;
           }
           break;
         case '@':
           switch (c2) {
-            case '=':               return Tokens.ATEQUAL;
+            case '=': return Tokens.ATEQUAL;
           }
           break;
       }
