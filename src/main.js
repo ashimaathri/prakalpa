@@ -21,11 +21,15 @@ define([
     },
 
     appendToTextBox: function (tokenInfo) {
-      this.resultElt.text(this.resultElt.text() +
-          tokenInfo.token +
-          (typeof(tokenInfo.start) !== 'undefined' ? ' Start:' + tokenInfo.start + ' End:' + tokenInfo.end : '') +
-          (typeof(tokenInfo.error) !== 'undefined' ? ' ' + tokenInfo.error : '') +
-          '\n');
+      var key, text;
+
+      text = this.resultElt.text(); 
+      for(key in tokenInfo) {
+        text += key + ': ' + tokenInfo[key] + ' ';
+      }
+      text += '\n';
+
+      this.resultElt.text(text);
     },
 
     getAllTokens: function () {
@@ -34,7 +38,7 @@ define([
       do {
         tokenInfo = this.tokenizer.getNext();
         this.appendToTextBox(tokenInfo);
-      } while(tokenInfo.token != 'ENDMARKER');
+      } while(tokenInfo.token !== 'ENDMARKER');
     }
   });
 });
