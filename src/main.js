@@ -17,16 +17,14 @@ define([
     },
 
     getNextToken: function () {
-      this.appendToTextBox(this.tokenizer.getNext());
+      this.appendObjectToTextBox(this.tokenizer.getNext());
     },
 
-    appendToTextBox: function (tokenInfo) {
-      var key, text;
+    appendObjectToTextBox: function (tokenInfo) {
+      var text;
 
-      text = this.resultElt.text(); 
-      for(key in tokenInfo) {
-        text += key + ': ' + tokenInfo[key] + ' ';
-      }
+      text = this.resultElt.text();
+      text += JSON.stringify(tokenInfo);
       text += '\n';
 
       this.resultElt.text(text);
@@ -37,7 +35,7 @@ define([
 
       do {
         tokenInfo = this.tokenizer.getNext();
-        this.appendToTextBox(tokenInfo);
+        this.appendObjectToTextBox(tokenInfo);
       } while(tokenInfo.token !== 'ENDMARKER');
     }
   });
