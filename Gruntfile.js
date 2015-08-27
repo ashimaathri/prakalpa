@@ -26,7 +26,7 @@ module.exports = function(grunt) {
       prod: {
         options: {
           config: 'tests/intern',
-          reporters: ['console', 'lcovhtml']
+          reporters: ['Console', { id: 'LcovHtml', directory: 'html-report' }]
         }
       }
     }
