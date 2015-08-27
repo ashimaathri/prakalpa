@@ -21,7 +21,7 @@ define([
       this.indent = 0;
       this.pending = 0;
       this.charIndex = -1;
-      this.startOfToken = 0;
+      this.startOfToken = [];
       this.contLine = false;
       this.lineNum = 1;
       this.colNum = -1;
@@ -42,6 +42,9 @@ define([
       if(this.charIndex === -1) { return; }
       this.charIndex--;
       this.colNum--;
+      if(this.sourceText[this.charIndex] === '\n') {
+        this.lineNum--;
+      }
     },
 
     getNext: function () {
@@ -51,7 +54,7 @@ define([
     nextline: function () {
       var error;
 
-      this.startOfToken = 0;
+      this.startOfToken = [0, this.lineNum];
       this.blankline = false;
 
       if(this.atBeginningOfLine) {
@@ -60,7 +63,7 @@ define([
         if(error) { return error; }
       }
 
-      this.startOfToken = this.colNum + 1;
+      this.startOfToken = [this.colNum + 1, this.lineNum];
 
       if(this.pending !== 0) {
         if(this.pending < 0) {
@@ -123,8 +126,7 @@ define([
       return { 
         token: Tokens.NAME,
         start: this.startOfToken,
-        end: this.colNum + 1,
-        lineNum: this.lineNum
+        end: [this.colNum + 1, this.lineNum]
       };
     },
 
@@ -134,7 +136,7 @@ define([
       //TODO Add support for tabs and form feeds
       do { c = this.getNextChar(); } while (c === ' ');
 
-      this.startOfToken = this.colNum;
+      this.startOfToken = [this.colNum, this.lineNum];
 
       if(c === '#') {
         while (c && c !== '\n') { c = this.getNextChar(); }
@@ -155,8 +157,7 @@ define([
         return {
           token: Tokens.NEWLINE,
           start: this.startOfToken,
-          end: this.colNum,
-          lineNum: this.lineNum
+          end: [this.colNum, this.lineNum]
         };
       }
 
@@ -174,8 +175,7 @@ define([
             return {
               token: Tokens.ELLIPSIS,
               start: this.startOfToken,
-              end: this.colNum + 1,
-              lineNum: this.lineNum
+              end: [this.colNum + 1, this.lineNum]
             };
           } else {
             this.backupOneChar();
@@ -187,8 +187,7 @@ define([
         return {
           token: Tokens.DOT,
           start: this.startOfToken,
-          end: this.colNum + 1,
-          lineNum: this.lineNum
+          end: [this.colNum + 1, this.lineNum]
         };
       }
 
@@ -292,8 +291,7 @@ define([
         return {
           token: Tokens.NUMBER,
           start: this.startOfToken,
-          end: this.colNum + 1,
-          lineNum: this.lineNum
+          end: [this.colNum + 1, this.lineNum]
         };
       }
       return this.letterQuote(c);
@@ -316,8 +314,7 @@ define([
       return {
         token: Tokens.NUMBER,
         start: this.startOfToken,
-        end: this.colNum + 1,
-        lineNum: this.lineNum
+        end: [this.colNum + 1, this.lineNum]
       };
     },
 
@@ -341,8 +338,7 @@ define([
         return {
           token: Tokens.NUMBER,
           start: this.startOfToken,
-          end: this.colNum + 1,
-          lineNum: this.lineNum
+          end: [this.colNum + 1, this.lineNum]
         };
       }
       do {
@@ -357,8 +353,7 @@ define([
       return {
         token: Tokens.NUMBER,
         start: this.startOfToken,
-        end: this.colNum + 1,
-        lineNum: this.lineNum
+        end: [this.colNum + 1, this.lineNum]
       };
     },
 
@@ -366,8 +361,7 @@ define([
       return {
         token: Tokens.NUMBER,
         start: this.startOfToken,
-        end: this.colNum + 1,
-        lineNum: this.lineNum
+        end: [this.colNum + 1, this.lineNum]
       };
     },
 
@@ -418,8 +412,7 @@ define([
         return {
           token: Tokens.STRING,
           start: this.startOfToken,
-          end: this.colNum + 1,
-          lineNum: this.lineNum
+          end: [this.colNum + 1, this.lineNum]
         };
       }
 
@@ -430,7 +423,11 @@ define([
       if(c === '\\') {
         c = this.getNextChar();
         if(c !== '\n') {
-          return { error: Errors.LINECONT, token: Tokens.ERRORTOKEN, lineNum: this.lineNum };
+          return {
+            error: Errors.LINECONT,
+            token: Tokens.ERRORTOKEN,
+            lineNum: this.lineNum
+          };
         }
         this.contLine = true;
         return this.again();
@@ -455,8 +452,7 @@ define([
         return {
           token: token,
           start: this.startOfToken,
-          end: this.colNum + 1,
-          lineNum: this.lineNum
+          end: [this.colNum + 1, this.lineNum]
         };
       }
       this.backupOneChar();
@@ -485,8 +481,7 @@ define([
       return {
         token: this.oneCharToken(c),
         start: this.startOfToken,
-        end: this.colNum + 1,
-        lineNum: this.lineNum
+        end: [this.colNum + 1, this.lineNum]
       };
     },
 
@@ -541,7 +536,11 @@ define([
       if(!this.blankline && this.level === 0) {
         if(col > this.indstack[this.indent]) {
           if(this.indent + 1 >= MAXINDENT) {
-            return { error: Errors.TOODEEP, token: Tokens.ERRORTOKEN, lineNum: this.lineNum };
+            return {
+              error: Errors.TOODEEP,
+              token: Tokens.ERRORTOKEN,
+              lineNum: this.lineNum
+            };
           }
           this.pending++;
           this.indstack[++this.indent] = col;
@@ -551,7 +550,11 @@ define([
             this.indent--;
           }
           if(col !== this.indstack[this.indent]) {
-            return { error: Errors.DEDENT, token: Tokens.ERRORTOKEN, lineNum: this.lineNum };
+            return {
+              error: Errors.DEDENT,
+              token: Tokens.ERRORTOKEN,
+              lineNum: this.lineNum
+            };
           }
         }
       }
