@@ -26,6 +26,12 @@ module.exports = function(grunt) {
       prod: {
         options: {
           config: 'tests/intern',
+          reporters: ['Console']
+        }
+      },
+      dev: {
+        options: {
+          config: 'tests/intern',
           reporters: ['Console', { id: 'LcovHtml', directory: 'html-report' }]
         }
       }
@@ -35,5 +41,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('intern');
   
   grunt.registerTask('test', ['jshint', 'intern:prod']);
+  grunt.registerTask('test-local', ['jshint', 'intern:dev']);
   grunt.registerTask('default', ['test']);
 };
