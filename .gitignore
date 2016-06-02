@@ -1,3 +1,4 @@
 *.swp
 node_modules
 html-report
+.tern-project
