@@ -14,7 +14,8 @@ module.exports = function(grunt) {
         latedef: true,
         nonbsp: true,
         dojo: true,
-        predef: ['module']
+        predef: ['module'],
+        loopfunc: true
       },
       all: [
         'Gruntfile.js',

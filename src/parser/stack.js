@@ -1,15 +1,28 @@
 define([
   'dojo/_base/declare'
 ], function (declare) {
-  return declare([], {
-    constructor: function (opts) {
-      lang.mixin(this, opts);
+  return declare([Array], {
+    peek: function (propertyName) {
+      var topEntry;
+
+      topEntry = this[this.length - 1];
+
+      if(propertyName) {
+        return topEntry[propertyName];
+      } else {
+        return topEntry;
+      }
     },
-    push: function () {
+
+    isEmpty: function () {
+      return !this.length;
     },
-    pop: function () {
-    },
-    reset: function () {
+
+    updateTop: function (propertyName, newValue) {
+      var topEntry;
+
+      topEntry = this.peek();
+      topEntry[propertyName] = newValue;
     }
   });
 });

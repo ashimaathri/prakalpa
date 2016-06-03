@@ -51,9 +51,7 @@
         'dojo/query',
         'dojo/NodeList-manipulate'
       ], function (Prakalpa, query) {
-        var interpreter;
-
-        interpreter = new Prakalpa();
+        window.interpreter = new Prakalpa();
 
         query('#load').on('click', function () {
           interpreter.load(query('#code').val(), '#results');
@@ -62,6 +60,7 @@
         query('#get-next-token').on('click', function () {
           interpreter.getNextToken();
         });
+
         query('#get-all-tokens').on('click', function () {
           interpreter.getAllTokens();
         });

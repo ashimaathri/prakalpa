@@ -3,8 +3,12 @@ define([
   'dojo/_base/lang',
   'dojo/query',
   './tokenizer',
+  './parser/meta_grammar',
+  './parser/main',
+  './parser/non_terminals',
+  'dojo/request/xhr',
   'dojo/NodeList-manipulate'
-], function (declare, lang, query, Tokenizer) {
+], function (declare, lang, query, Tokenizer, metagrammarDFAs, Parser, NonTerminals, xhr) {
   return declare([], {
     constructor: function (opts) {
       lang.mixin(this, opts);
@@ -37,6 +41,18 @@ define([
         tokenInfo = this.tokenizer.getNext();
         this.appendObjectToTextBox(tokenInfo);
       } while(tokenInfo.token !== 'ENDMARKER');
+    },
+
+    construct_parse_tree: function (pathToGrammarFile, callback) {
+      xhr(pathToGrammarFile)
+        .then(function (pythonGrammar) {
+          callback(
+            new Parser({
+              grammar: metagrammarDFAs,
+              start: NonTerminals.MSTART,
+              sourceText: pythonGrammar
+            }).parse());
+        });
     }
   });
 });
