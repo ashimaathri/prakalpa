@@ -10,6 +10,9 @@ define([
   'dojo/NodeList-manipulate'
 ], function (declare, lang, query, Tokenizer, metagrammarDFAs, Parser, NonTerminals, xhr) {
   return declare([], {
+    /**
+     * sourceText: Source that needs to be tokenized
+     */
     constructor: function (opts) {
       lang.mixin(this, opts);
     },

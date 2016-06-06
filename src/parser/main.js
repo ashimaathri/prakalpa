@@ -1,3 +1,7 @@
+/*
+ * Port of cpython's parser, Parser/parser.c,
+ * in particular the PyParser_AddToken function.
+ */
 define([
   'dojo/_base/declare',
   'dojo/_base/lang',
@@ -11,8 +15,13 @@ define([
 ], function (declare, lang, array, Tokenizer, Stack, ParseTreeNode,
              ParserStatus, Tokens, NonTerminals) {
   return declare([], {
+    /**
+      * grammar: Dictionary of nonTerminal(key), dfa(value)
+      * start: nonTerminal for start symbol
+      * sourceText: Source that needs to be parsed
+      **/
     constructor: function (opts) {
-      var dfa;
+      var start_symbol_dfa;
 
       lang.mixin(this, opts);
 
@@ -25,14 +34,14 @@ define([
         columnOffset: 0
       });
 
-      dfa = this.grammar[this.start];
-
       this.stack = new Stack();
 
+      start_symbol_dfa = this.grammar[this.start];
+
       this.stack.push({
-        dfa: dfa,
+        dfa: start_symbol_dfa,
         currentParseTreeNode: this.parseTreeRoot,
-        currentState: dfa.states[0]
+        currentState: start_symbol_dfa.states[0]
       });
 
       this.constructNextTable();
@@ -46,7 +55,6 @@ define([
       for(nonTerminal in grammar) {
         dfa = grammar[nonTerminal];
         array.forEach(dfa.states, function (state) {
-          state.next = {};
           array.forEach(state.arcs, function (arc) {
             var firstSet;
 
@@ -110,7 +118,8 @@ define([
           return tokenInfo.error;
         }
         parseStatus = this.addToken(tokenInfo);
-        if(parseStatus !== ParserStatus.OK && parseStatus !== ParserStatus.DONE) {
+        if(parseStatus !== ParserStatus.OK &&
+           parseStatus !== ParserStatus.DONE) {
           return parseStatus; 
         }
       } while(tokenInfo.token !== Tokens.ENDMARKER);
@@ -131,21 +140,20 @@ define([
           transition = currentState.next[tokenInfo.token];
 
           if(transition.nonTerminal) {
-            //TODO Add column offset
             this.push({
               nonTerminal: transition.nonTerminal,
               dfa: this.grammar[transition.nonTerminal],
               endState: dfa.states[transition.arrow],
-              lineNum: tokenInfo.lineNum
+              lineNum: tokenInfo.lineNum || tokenInfo.start.lineNum
             }, currentParseTreeNode);
             continue;
           } else {
-            //TODO Add token string and column offset here
             this.shift({
               terminal: tokenInfo.token,
               endState: dfa.states[transition.arrow],
-              lineNum: tokenInfo.lineNum,
-              string: tokenInfo.string
+              lineNum: tokenInfo.lineNum || tokenInfo.start.lineNum,
+              string: tokenInfo.string,
+              columnOffset: tokenInfo.start && tokenInfo.start.column
             }, currentParseTreeNode);
           }
 
@@ -159,7 +167,7 @@ define([
               return ParserStatus.DONE;
             }
 
-            currentState = this.stack.peek().currentState;
+            currentState = this.stack.peek('currentState');
           }
           return ParserStatus.OK;
         }
