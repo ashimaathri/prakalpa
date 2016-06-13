@@ -13,8 +13,17 @@ define([
       lang.mixin(this, opts);
       this.children = [];
     },
+
     addChild: function (child) {
       this.children.push(child);
+    },
+
+    is: function (symbol) {
+      return (this.symbol === symbol);
+    },
+
+    getString: function () {
+      return this.string;
     }
   });
 });

@@ -5,10 +5,12 @@ define([
   './tokenizer',
   './parser/meta_grammar',
   './parser/main',
+  './parser/pgen',
   './parser/non_terminals',
   'dojo/request/xhr',
   'dojo/NodeList-manipulate'
-], function (declare, lang, query, Tokenizer, metagrammarDFAs, Parser, NonTerminals, xhr) {
+], function (declare, lang, query, Tokenizer, metagrammarDFAs, Parser,
+             ParserGenerator, NonTerminals, xhr) {
   return declare([], {
     /**
      * sourceText: Source that needs to be tokenized
@@ -56,6 +58,13 @@ define([
               sourceText: pythonGrammar
             }).parse());
         });
+    },
+
+    constructNFAGrammar: function (parseTreeRoot) {
+      var pgen;
+
+      pgen = new ParserGenerator({ parseTreeRoot: parseTreeRoot });
+      return pgen.nfaGrammar;
     }
   });
 });
