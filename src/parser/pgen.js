@@ -120,7 +120,7 @@ define([
       start = states.start;
       end = states.end;
 
-      for(; i < parseTreeNode.children; i++) {
+      for(; i < parseTreeNode.children.length; i++) {
         child = parseTreeNode.children[i];
         this.REQ(child, NonTerminals.ITEM);
         states = this.compileItem(nfa, child);
