@@ -3,7 +3,8 @@ define([
   'dojo/_base/lang',
   './non_terminals',
   '../tokens',
-], function (declare, lang, NonTerminals, Terminals) {
+  './nfa'
+], function (declare, lang, NonTerminals, Terminals, NFA) {
   return declare([], {
     constructor: function (opts) {
       lang.mixin(this, opts);
@@ -13,13 +14,13 @@ define([
 
     REQ: function (node, expectedSymbol) {
       if(!node.is(expectedSymbol)) {
-        throw new Error('Expected ' + node.symbol + ', got ' + expectedSymbol);
+        throw new Error('Expected ' + expectedSymbol + ', got ' + node.symbol);
       }
     },
 
     REQN: function (children, expectedNumChildren) {
       if(children.length < expectedNumChildren) {
-        throw new Error('Expected at least' + children.length + ' children, got ' + expectedNumChildren);
+        throw new Error('Expected at least' + expectedNumChildren + ' children, got ' + children.length);
       }
     },
 
@@ -28,8 +29,8 @@ define([
 
       this.REQ(this.parseTreeRoot, NonTerminals.MSTART);
       // Process all children (RULES) other than the last child (ENDMARKER)
-      for(i = 0; i < parseTreeRoot.children.length - 1; i++) {
-        child = parseTreeRoot.children[i];
+      for(i = 0; i < this.parseTreeRoot.children.length - 1; i++) {
+        child = this.parseTreeRoot.children[i];
         if(!child.is(Terminals.NEWLINE)) {
           this.compileRule(child);
         }
@@ -48,7 +49,7 @@ define([
       this.REQ(child, Terminals.NAME);
 
       //TODO Create NFA DS
-      nfa = new NFA();
+      nfa = new NFA({ name: child.string });
       this.nfaGrammar[child.string] = nfa;
 
       child = parseTreeNode.children[i++];
@@ -62,7 +63,7 @@ define([
 
       child = parseTreeNode.children[i];
       this.REQ(child, Terminals.NEWLINE);
-    }
+    },
 
     compileRHS: function (nfa, parseTreeNode) {
       var child, i, newStart, newEnd, states, start, end;
@@ -83,8 +84,8 @@ define([
         return { start: start, end: end };
       }
 
-      newStart = nfa.newState();
-      newEnd = nfa.newState();
+      newStart = nfa.addNewState();
+      newEnd = nfa.addNewState();
       nfa.addEmptyArc(newStart, start);
       nfa.addEmptyArc(end, newEnd);
       start = newStart;
@@ -146,8 +147,8 @@ define([
         child = parseTreeNode.children[i++];
         this.REQ(child, NonTerminals.RHS);
 
-        start = nfa.newState();
-        end = nfa.newState();
+        start = nfa.addNewState();
+        end = nfa.addNewState();
         nfa.addEmptyArc(start, end);
 
         states = this.compileRHS(nfa, child);
@@ -170,7 +171,7 @@ define([
         if(child.is(Terminals.STAR)) {
           end = start;
         } else {
-          this.REQ(child, Terminals.PLUS)
+          this.REQ(child, Terminals.PLUS);
         }
       }
       return { start: start, end: end };
@@ -186,7 +187,7 @@ define([
 
       child = parseTreeNode.children[i++];
 
-      if(child.is(NonTerminals.LPAR)) {
+      if(child.is(Terminals.LPAR)) {
         this.REQN(parseTreeNode.children, 3);
 
         child = parseTreeNode.children[i++];
@@ -197,9 +198,9 @@ define([
 
         child = parseTreeNode.children[i];
         this.REQ(child, Terminals.RPAR);
-      } else if(child.is(Terminals.NAME) || child.is(Terminals.STRING)) {
-        start = nfa.newState();
-        end = nfa.newState();
+      } else if (child.is(Terminals.NAME) || child.is(Terminals.STRING)) {
+        start = nfa.addNewState();
+        end = nfa.addNewState();
         nfa.addArc(start, end, child.getString());
       } else {
         this.REQ(child, Terminals.NAME);

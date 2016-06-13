@@ -21,10 +21,31 @@ define([
       this.indent = 0;
       this.pending = 0;
       this.charIndex = -1;
-      this.startOfToken = [];
+      this.startOfToken = {};
       this.contLine = false;
       this.lineNum = 1;
       this.colNum = -1;
+      this.lines = this.sourceText.split('\n');
+    },
+
+    getString: function (start, end) {
+      var startLine, endLine, startColumn, endColumn, string, i;
+
+      startColumn = start.column;
+      endColumn = end.column;
+      startLine = start.lineNum - 1;
+      endLine = end.lineNum - 1;
+
+      if(startLine === endLine) {
+        string = this.lines[startLine].substring(startColumn, endColumn);
+      } else {
+        string = this.lines[startLine].substring(startColumn);
+        for(i = startLine + 1; i < endLine - 1; i++) {
+          string += this.lines[i] + '\n';
+        }
+        string += this.lines[i].substring(0, endColumn);
+      }
+      return string;
     },
 
     getNextChar: function () {
@@ -54,7 +75,7 @@ define([
     nextline: function () {
       var error;
 
-      this.startOfToken = [0, this.lineNum];
+      this.startOfToken = { column: 0, lineNum: this.lineNum };
       this.blankline = false;
 
       if(this.atBeginningOfLine) {
@@ -63,7 +84,7 @@ define([
         if(error) { return error; }
       }
 
-      this.startOfToken = [this.colNum + 1, this.lineNum];
+      this.startOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
 
       if(this.pending !== 0) {
         if(this.pending < 0) {
@@ -86,7 +107,7 @@ define([
     },
 
     processNames: function (c) {
-      var nonascii, saw_b, saw_r, saw_u;
+      var nonascii, saw_b, saw_r, saw_u, endOfToken;
 
       nonascii = false;
       saw_b = saw_r = saw_u = false;
@@ -123,20 +144,22 @@ define([
 
       //TODO Add support for async
 
-      return { 
+      endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+      return {
         token: Tokens.NAME,
         start: this.startOfToken,
-        end: [this.colNum + 1, this.lineNum]
+        end: endOfToken,
+        string: this.getString(this.startOfToken, endOfToken)
       };
     },
 
     again: function () {
-      var c;
+      var c, endOfToken;
 
       //TODO Add support for tabs and form feeds
       do { c = this.getNextChar(); } while (c === ' ');
 
-      this.startOfToken = [this.colNum, this.lineNum];
+      this.startOfToken = { column: this.colNum, lineNum: this.lineNum };
 
       if(c === '#') {
         while (c && c !== '\n') { c = this.getNextChar(); }
@@ -154,10 +177,12 @@ define([
         this.atBeginningOfLine = true;
         if(this.blankline || this.level > 0) { return this.nextline(); }
         this.contLine = false;
+        endOfToken = { column: this.colNum, lineNum: this.lineNum };
         return {
           token: Tokens.NEWLINE,
           start: this.startOfToken,
-          end: [this.colNum, this.lineNum]
+          end: endOfToken,
+          string: this.getString(this.startOfToken, endOfToken)
         };
       }
 
@@ -165,6 +190,8 @@ define([
     },
 
     startWithPeriod: function (c) {
+      var endOfToken;
+
       if(c === '.') {
         c = this.getNextChar();
         if(this.isDigit(c)) {
@@ -172,10 +199,12 @@ define([
         } else if(c === '.') {
           c = this.getNextChar();
           if(c === '.') {
+            endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
             return {
               token: Tokens.ELLIPSIS,
               start: this.startOfToken,
-              end: [this.colNum + 1, this.lineNum]
+              end: endOfToken,
+              string: this.getString(this.startOfToken, endOfToken)
             };
           } else {
             this.backupOneChar();
@@ -184,10 +213,12 @@ define([
         } else {
           this.backupOneChar();
         }
+        endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
         return {
           token: Tokens.DOT,
           start: this.startOfToken,
-          end: [this.colNum + 1, this.lineNum]
+          end: endOfToken,
+          string: this.getString(this.startOfToken, endOfToken)
         };
       }
 
@@ -195,7 +226,7 @@ define([
     },
 
     isNumber: function (c) {
-      var nonZero, charCode;
+      var nonZero, charCode, endOfToken;
 
       if(this.isDigit(c)) {
         if(c === '0') {
@@ -288,16 +319,20 @@ define([
           }
         }
         this.backupOneChar();
+        endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
         return {
           token: Tokens.NUMBER,
           start: this.startOfToken,
-          end: [this.colNum + 1, this.lineNum]
+          end: endOfToken,
+          string: this.getString(this.startOfToken, endOfToken)
         };
       }
       return this.letterQuote(c);
     },
 
     fraction: function (c) {
+      var endOfToken;
+
       do {
         c = this.getNextChar();
       } while (this.isDigit(c));
@@ -311,15 +346,17 @@ define([
       }
 
       this.backupOneChar();
+      endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
       return {
         token: Tokens.NUMBER,
         start: this.startOfToken,
-        end: [this.colNum + 1, this.lineNum]
+        end: endOfToken,
+        string: this.getString(this.startOfToken, endOfToken)
       };
     },
 
     exponent: function () {
-      var c;
+      var c, endOfToken;
 
       c = this.getNextChar();
       if(c === '+' || c === '-') {
@@ -335,10 +372,12 @@ define([
       } else if(!this.isDigit(c)) {
         this.backupOneChar();
         this.backupOneChar();
+        endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
         return {
           token: Tokens.NUMBER,
           start: this.startOfToken,
-          end: [this.colNum + 1, this.lineNum]
+          end: endOfToken,
+          string: this.getString(this.startOfToken, endOfToken)
         };
       }
       do {
@@ -350,23 +389,30 @@ define([
       }
 
       this.backupOneChar();
+      endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
       return {
         token: Tokens.NUMBER,
         start: this.startOfToken,
-        end: [this.colNum + 1, this.lineNum]
+        end: endOfToken,
+        string: this.getString(this.startOfToken, endOfToken)
       };
     },
 
     imaginary: function () {
+      var endOfToken;
+
+      endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+
       return {
         token: Tokens.NUMBER,
         start: this.startOfToken,
-        end: [this.colNum + 1, this.lineNum]
+        end: endOfToken,
+        string: this.getString(this.startOfToken, endOfToken)
       };
     },
 
     letterQuote: function (c) {
-      var quote, quoteSize, endQuoteSize;
+      var quote, quoteSize, endQuoteSize, endOfToken;
 
       if(c === '"' || c === "'") {
         quote = c;
@@ -409,10 +455,12 @@ define([
           }
         }
 
+        endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
         return {
           token: Tokens.STRING,
           start: this.startOfToken,
-          end: [this.colNum + 1, this.lineNum]
+          end: endOfToken,
+          string: this.getString(this.startOfToken, endOfToken)
         };
       }
 
@@ -437,7 +485,7 @@ define([
     },
 
     twoCharacter: function (c) {
-      var c2, c3, token, token3;
+      var c2, c3, token, token3, endOfToken;
 
       c2 = this.getNextChar();
       token = this.twoCharToken(c, c2);
@@ -449,10 +497,12 @@ define([
         } else {
           this.backupOneChar();
         }
+        endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
         return {
           token: token,
           start: this.startOfToken,
-          end: [this.colNum + 1, this.lineNum]
+          end: endOfToken,
+          string: this.getString(this.startOfToken, endOfToken)
         };
       }
       this.backupOneChar();
@@ -478,10 +528,15 @@ define([
     },
 
     oneCharacter: function (c) {
+      var endOfToken;
+
+      endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+
       return {
         token: this.oneCharToken(c),
         start: this.startOfToken,
-        end: [this.colNum + 1, this.lineNum]
+        end: endOfToken,
+        string: this.getString(this.startOfToken, endOfToken)
       };
     },
 
