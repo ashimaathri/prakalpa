@@ -14,11 +14,13 @@ define([
            { label: Tokens.NEWLINE, arrow: 0 },
            { label: Tokens.ENDMARKER, arrow: 1 }
          ],
-         isAccepting: false
+         isAccepting: false,
+         next: {}
        },
        {
          arcs: [],
-         isAccepting: true
+         isAccepting: true,
+         next: {}
        }
       ],
       firstSet: [Tokens.NEWLINE, Tokens.NAME]
@@ -29,29 +31,34 @@ define([
           arcs: [
             { label: Tokens.NAME, arrow: 1 }
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [
             { label: Tokens.COLON, arrow: 2 }
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [
             { label: NonTerminals.RHS, arrow: 3 }
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [
             { label: Tokens.NEWLINE, arrow: 4 }
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [],
-          isAccepting: true
+          isAccepting: true,
+          next: {}
         }
       ],
       firstSet: [Tokens.NAME]
@@ -62,13 +69,15 @@ define([
           arcs: [
             { label: NonTerminals.ALT, arrow: 1}
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [
             { label: Tokens.VBAR, arrow: 0},
           ],
-          isAccepting: true
+          isAccepting: true,
+          next: {}
         }
       ],
       firstSet: [Tokens.NAME, Tokens.STRING, Tokens.LPAR, Tokens.LSQB]
@@ -79,13 +88,15 @@ define([
           arcs: [
             { label: NonTerminals.ITEM, arrow: 1 }
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [
             { label: NonTerminals.ITEM, arrow: 1 },
           ],
-          isAccepting: true
+          isAccepting: true,
+          next: {}
         }
       ],
       firstSet: [Tokens.NAME, Tokens.STRING, Tokens.LPAR, Tokens.LSQB]
@@ -97,30 +108,35 @@ define([
             { label: Tokens.LSQB, arrow: 1 },
             { label: NonTerminals.ATOM, arrow: 2 }
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [
             { label: NonTerminals.RHS, arrow: 3}
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [
             { label: Tokens.STAR, arrow: 4 },
             { label: Tokens.PLUS, arrow: 4 }
           ],
-          isAccepting: true
+          isAccepting: true,
+          next: {}
         },
         {
           arcs: [
             { label: Tokens.RSQB, arrow: 4 }
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [],
-          isAccepting: true
+          isAccepting: true,
+          next: {}
         }
       ],
       firstSet: [Tokens.NAME, Tokens.STRING, Tokens.LPAR, Tokens.LSQB]
@@ -133,23 +149,27 @@ define([
             { label: Tokens.STRING, arrow: 1 },
             { label: Tokens.LPAR, arrow: 2 }
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [],
-          isAccepting: true
+          isAccepting: true,
+          next: {}
         },
         {
           arcs: [
             { label: NonTerminals.RHS, arrow: 3 }
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         },
         {
           arcs: [
             { label: Tokens.RPAR, arrow: 1 }
           ],
-          isAccepting: false
+          isAccepting: false,
+          next: {}
         }
       ],
       firstSet: [Tokens.NAME, Tokens.STRING, Tokens.LPAR]
