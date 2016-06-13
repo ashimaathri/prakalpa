@@ -1,15 +1,29 @@
 define([
   'dojo/_base/declare',
   'dojo/_base/lang',
+  'dojo/_base/array',
   './non_terminals',
   '../tokens',
   './nfa'
-], function (declare, lang, NonTerminals, Terminals, NFA) {
+], function (declare, lang, array, NonTerminals, Terminals, NFA) {
   return declare([], {
     constructor: function (opts) {
       lang.mixin(this, opts);
       this.nfaGrammar = {};
+      this.labels = [];
       this.metaCompile();
+    },
+
+    addLabel: function (newLabel) {
+      var existingLabel;
+
+      existingLabel = array.filter(this.labels, function (label) {
+        return (label.type === newLabel.type && label.string === newLabel.string);
+      });
+
+      if(!existingLabel.length) {
+        this.labels.push(newLabel);
+      }
     },
 
     REQ: function (node, expectedSymbol) {
@@ -38,7 +52,7 @@ define([
     },
 
     compileRule: function (parseTreeNode) {
-      var child, i, nfa, states;
+      var child, i, nfa, states, string;
 
       i = 0;
 
@@ -48,9 +62,10 @@ define([
       child = parseTreeNode.children[i++];
       this.REQ(child, Terminals.NAME);
 
-      //TODO Create NFA DS
-      nfa = new NFA({ name: child.string });
-      this.nfaGrammar[child.string] = nfa;
+      string = child.getString();
+      this.addLabel({ type: Terminals.NAME, string: string });
+      nfa = new NFA({ name: string });
+      this.nfaGrammar[string] = nfa;
 
       child = parseTreeNode.children[i++];
       this.REQ(child, Terminals.COLON);
@@ -201,6 +216,7 @@ define([
       } else if (child.is(Terminals.NAME) || child.is(Terminals.STRING)) {
         start = nfa.addNewState();
         end = nfa.addNewState();
+        this.addLabel({ type: child.getSymbol(), string: child.getString() });
         nfa.addArc(start, end, child.getString());
       } else {
         this.REQ(child, Terminals.NAME);

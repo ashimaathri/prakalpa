@@ -24,6 +24,10 @@ define([
 
     getString: function () {
       return this.string;
+    },
+
+    getSymbol: function () {
+      return this.symbol;
     }
   });
 });
