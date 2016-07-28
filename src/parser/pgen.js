@@ -4,14 +4,17 @@ define([
   'dojo/_base/array',
   './non_terminals',
   '../tokens',
-  './nfa'
-], function (declare, lang, array, NonTerminals, Terminals, NFA) {
+  './nfa',
+  './dfa'
+], function (declare, lang, array, NonTerminals, Terminals, NFA, DFA) {
   return declare([], {
     constructor: function (opts) {
       lang.mixin(this, opts);
       this.nfaGrammar = {};
+      this.dfaGrammar = {};
       this.labels = [];
       this.metaCompile();
+      this.makeDFAs();
     },
 
     addLabel: function (newLabel) {
@@ -48,6 +51,15 @@ define([
         if(!child.is(Terminals.NEWLINE)) {
           this.compileRule(child);
         }
+      }
+    },
+
+    makeDFAs: function () {
+      var nfa, type;
+
+      for(type in this.nfaGrammar) {
+        nfa = this.nfaGrammar[type];
+        this.dfaGrammar[type] = new DFA({type: type, nfa: nfa});
       }
     },
 
