@@ -64,7 +64,7 @@ define([
       var pgen;
 
       pgen = new ParserGenerator({ parseTreeRoot: parseTreeRoot });
-      return [pgen.nfaGrammar, pgen.labels];
+      return [pgen.nfaGrammar, pgen.labels, pgen.dfaGrammar];
     }
   });
 });

@@ -24,7 +24,7 @@ define([
     },
 
     generateDFA: function (state) {
-      var arcs;
+      var arcs, label;
 
       array.forEach(state.getNFAStates(), function (nfaState) {
         array.forEach(nfaState, function (arc) {
@@ -41,21 +41,26 @@ define([
         if(dfaState.containsNFAState(this.nfa.end)) {
           dfaState.setAsEndState();
         }
-        this.addState(dfaState);
-        this.generateDFA(dfaState);
+        if(this.addState(dfaState)) {
+          this.generateDFA(dfaState);
+        }
       }
-    }
+    },
 
     addState: function (dfaState) {
-      var contains;
+      var contains, newState;
 
       contains = array.filter(this.states, function (state) {
         return state.equals(dfaState);
       });
 
-      if(!contains.length) {
+      newState = !contains.length;
+
+      if(newState) {
         this.states.push(dfaState);
       }
+
+      return newState;
     }
   });
 });
