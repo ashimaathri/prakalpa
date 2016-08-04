@@ -2,11 +2,12 @@ define([
   'dojo/_base/declare',
   'dojo/_base/lang',
   'dojo/_base/array',
-  './non_terminals',
-  '../tokens',
-  './nfa',
-  './dfa'
-], function (declare, lang, array, NonTerminals, Terminals, NFA, DFA) {
+  'prakalpa/parser/non_terminals',
+  'prakalpa/tokens',
+  'prakalpa/tokenizer',
+  'prakalpa/parser/nfa',
+  'prakalpa/parser/dfa'
+], function (declare, lang, array, NonTerminals, Terminals, Tokenizer, NFA, DFA) {
   return declare([], {
     constructor: function (opts) {
       lang.mixin(this, opts);
@@ -15,6 +16,7 @@ define([
       this.labels = [];
       this.metaCompile();
       this.makeDFAs();
+      this.translateLabels();
     },
 
     addLabel: function (newLabel) {
@@ -41,6 +43,67 @@ define([
       }
     },
 
+    isTerminal: function (token) {
+      return token in Terminals;
+    },
+
+    isNonTerminal: function (token) {
+      return token in this.dfaGrammar;
+    },
+
+    makeDFAs: function () {
+      var nfa, type;
+
+      for(type in this.nfaGrammar) {
+        nfa = this.nfaGrammar[type];
+        this.dfaGrammar[type] = new DFA({type: type, nfa: nfa});
+      }
+    },
+
+    translateLabels: function () {
+      array.forEach(this.labels, function (label) {
+        switch(label.type) {
+          case Terminals.NAME:
+            if(this.isNonTerminal(label.string) || this.isTerminal(label.string)) {
+              label.type = label.string;
+            } else {
+              //TODO Report error
+            }
+            break;
+          case Terminals.STRING:
+            label.string = label.string.slice(1, -1);
+            keywordRegex = /^[A-Za-z_]/
+            if(label.string.match(keywordRegex)) {
+              label.type = Terminals.NAME;
+            } else if(label.string.length === 1) {
+              type = Tokenizer.prototype.oneCharToken(label.string);
+              if(type !== Terminals.OP) {
+                label.type = type;
+              } else {
+                // TODO Report error
+              }
+            } else if(label.string.length === 2) {
+              type = Tokenizer.prototype.twoCharToken(label.string[0], label.string[1]);
+              if(type !== Terminals.OP) {
+                label.type = type;
+              } else {
+                // TODO Report error
+              }
+
+            } else if(label.string.length === 3) {
+              type = Tokenizer.prototype.threeCharToken(label.string[0], label.string[1], label.string[2]);
+              if(type !== Terminals.OP) {
+                label.type = type;
+              } else {
+                // TODO Report error
+              }
+            }
+            break;
+          default:
+        }
+      }.bind(this));
+    },
+
     metaCompile: function () {
       var i, child;
 
@@ -51,15 +114,6 @@ define([
         if(!child.is(Terminals.NEWLINE)) {
           this.compileRule(child);
         }
-      }
-    },
-
-    makeDFAs: function () {
-      var nfa, type;
-
-      for(type in this.nfaGrammar) {
-        nfa = this.nfaGrammar[type];
-        this.dfaGrammar[type] = new DFA({type: type, nfa: nfa});
       }
     },
 
