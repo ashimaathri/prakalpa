@@ -3,28 +3,30 @@ define([
   'dojo/_base/lang',
   'dojo/_base/array',
   'prakalpa/parser/dfa_state',
-  'prakalpa/tokens'
-], function (declare, lang, array, DFAState, Terminals) {
+  'prakalpa/tokens',
+  'prakalpa/exceptions'
+], function (declare, lang, array, DFAState, Terminals, Exceptions) {
+  var START_MARKER;
+
   return declare([], {
     constructor: function (opts) {
-      var stateIndex, state, arc, arcIndex;
-
       lang.mixin(this, opts);
 
       this.states = [];
+      this.firstSet = null;
 
-      start = new DFAState();
-      start.addClosure(this.nfa.start);
+      this.start = new DFAState();
+      this.start.addClosure(this.nfa.start);
       if(this.nfa.start === this.nfa.end) {
-        start.setAsEndState()
+        this.start.setAsEndState();
       }
-      this.states.push(start);
+      this.states.push(this.start);
 
-      this.generateDFA(start);
+      this.generateDFA(this.start);
     },
 
     generateDFA: function (state) {
-      var arcs, label;
+      var arcs, label, dfaState;
 
       array.forEach(state.getNFAStates(), function (nfaState) {
         array.forEach(nfaState, function (arc) {
@@ -61,6 +63,35 @@ define([
       }
 
       return newState;
-    }
+    },
+
+    calcFirstSet: function (dfaGrammar) {
+      var visited, result, label;
+
+      visited = {};
+      result = {};
+
+      if(this.firstSet === START_MARKER) {
+        throw new Exceptions.LeftRecursion(this.dfa.type);
+      }
+      if (this.firstSet) {
+        return this.firstSet;
+      }
+      this.firstSet = START_MARKER;
+
+      for(label in this.start.arcs) {
+        if(!(label in visited)) {
+          visited[label] = true;
+          if(label in dfaGrammar) {
+            lang.mixin(result, dfaGrammar[label].calcFirstSet(dfaGrammar)); // NonTerminal
+          } else if(label in Terminals){
+            result[label] = true; // Terminal 
+          }
+        }
+      }
+
+      this.firstSet = result;
+      return this.firstSet;
+    },
   });
 });

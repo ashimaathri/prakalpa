@@ -47,8 +47,6 @@ define([
     },
 
     updateArcDFAState: function (label, nfaState) {
-      var dfaState;
-
       if(!(label in this.arcs)) {
         this.arcs[label] = new DFAState();
       }

@@ -6,12 +6,12 @@ define([
   'dojo/_base/declare',
   'dojo/_base/lang',
   'dojo/_base/array',
-  '../tokenizer',
-  './stack',
-  './parse_tree_node',
-  './status_codes',
-  '../tokens',
-  './non_terminals',
+  'prakalpa/tokenizer',
+  'prakalpa/parser/stack',
+  'prakalpa/parser/parse_tree_node',
+  'prakalpa/parser/status_codes',
+  'prakalpa/tokens',
+  'prakalpa/parser/non_terminals',
 ], function (declare, lang, array, Tokenizer, Stack, ParseTreeNode,
              ParserStatus, Tokens, NonTerminals) {
   return declare([], {

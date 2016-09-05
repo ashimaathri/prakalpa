@@ -52,6 +52,7 @@
         'dojo/NodeList-manipulate'
       ], function (Prakalpa, query) {
         window.interpreter = new Prakalpa();
+        window.interpreter.construct_parse_tree('/prakalpa/src/parser/grammar.txt', window.interpreter.constructPgen);
 
         query('#load').on('click', function () {
           interpreter.load(query('#code').val(), '#results');

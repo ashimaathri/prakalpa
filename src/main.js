@@ -2,11 +2,11 @@ define([
   'dojo/_base/declare',
   'dojo/_base/lang',
   'dojo/query',
-  './tokenizer',
-  './parser/meta_grammar',
-  './parser/main',
-  './parser/pgen',
-  './parser/non_terminals',
+  'prakalpa/tokenizer',
+  'prakalpa/parser/meta_grammar',
+  'prakalpa/parser/main',
+  'prakalpa/parser/pgen',
+  'prakalpa/parser/non_terminals',
   'dojo/request/xhr',
   'dojo/NodeList-manipulate'
 ], function (declare, lang, query, Tokenizer, metagrammarDFAs, Parser,
@@ -60,11 +60,13 @@ define([
         });
     },
 
-    constructNFAGrammar: function (parseTreeRoot) {
+    constructPgen: function (parseTreeRoot) {
       var pgen;
 
       pgen = new ParserGenerator({ parseTreeRoot: parseTreeRoot });
-      return [pgen.nfaGrammar, pgen.labels, pgen.dfaGrammar];
+      window.nfaGrammar = pgen.nfaGrammar;
+      window.labels = pgen.labels;
+      window.dfaGrammar = pgen.dfaGrammar;
     }
   });
 });

@@ -2,8 +2,8 @@
  * generate the DFAs of the actual Python grammar
  */
 define([
-  './non_terminals',
-  '../tokens'
+  'prakalpa/parser/non_terminals',
+  'prakalpa/tokens'
 ], function (NonTerminals, Tokens) {
   return ({
     'MSTART': {

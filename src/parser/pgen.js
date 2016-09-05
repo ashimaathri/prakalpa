@@ -17,6 +17,7 @@ define([
       this.metaCompile();
       this.makeDFAs();
       this.translateLabels();
+      this.calcFirstSet();
     },
 
     addLabel: function (newLabel) {
@@ -62,17 +63,18 @@ define([
 
     translateLabels: function () {
       array.forEach(this.labels, function (label) {
+        var keywordRegex, type;
         switch(label.type) {
           case Terminals.NAME:
             if(this.isNonTerminal(label.string) || this.isTerminal(label.string)) {
               label.type = label.string;
             } else {
-              //TODO Report error
+              //TODO Report error (Maybe raise a custom exception)
             }
             break;
           case Terminals.STRING:
             label.string = label.string.slice(1, -1);
-            keywordRegex = /^[A-Za-z_]/
+            keywordRegex = /^[A-Za-z_]/;
             if(label.string.match(keywordRegex)) {
               label.type = Terminals.NAME;
             } else if(label.string.length === 1) {
@@ -102,6 +104,15 @@ define([
           default:
         }
       }.bind(this));
+    },
+
+    calcFirstSet: function () {
+      var type, dfa;
+
+      for(type in this.dfaGrammar) {
+        dfa = this.dfaGrammar[type];
+        dfa.calcFirstSet(this.dfaGrammar);
+      }
     },
 
     metaCompile: function () {

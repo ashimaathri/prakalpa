@@ -5,8 +5,8 @@
 define([
   'dojo/_base/declare',
   'dojo/_base/lang',
-  './tokens',
-  './errors'
+  'prakalpa/tokens',
+  'prakalpa/errors'
 ], function (declare, lang, Tokens, Errors) {
   var MAXINDENT;
 
