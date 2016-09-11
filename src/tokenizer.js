@@ -6,8 +6,9 @@ define([
   'dojo/_base/declare',
   'dojo/_base/lang',
   'prakalpa/tokens',
-  'prakalpa/errors'
-], function (declare, lang, Tokens, Errors) {
+  'prakalpa/errors',
+  'prakalpa/exceptions'
+], function (declare, lang, Tokens, Errors, Exceptions) {
   var MAXINDENT;
 
   MAXINDENT = 100;
@@ -73,15 +74,12 @@ define([
     },
 
     nextline: function () {
-      var error;
-
       this.startOfToken = { column: 0, lineNum: this.lineNum };
       this.blankline = false;
 
       if(this.atBeginningOfLine) {
         this.atBeginningOfLine = false;
-        error = this.countIndentsAndDedents();
-        if(error) { return error; }
+        this.countIndentsAndDedents();
       }
 
       this.startOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
@@ -139,7 +137,11 @@ define([
       this.backupOneChar();
 
       if(nonascii && !this.verifyIdentifier()) {
-        return { token: Tokens.ERRORTOKEN, lineNum: this.lineNum };
+        throw new Exceptions.TokenizeError({
+          message: Errors.TOKEN,
+          token: Tokens.ERRORTOKEN,
+          lineNum: this.lineNum
+        });
       }
 
       //TODO Add support for async
@@ -241,11 +243,11 @@ define([
             c = this.getNextChar();
             if(!this.isXDigit(c)) {
               this.backupOneChar();
-              return {
-                error: Errors.TOKEN,
+              throw new Exceptions.TokenizeError({
+                message: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN,
                 lineNum: this.lineNum
-              };
+              });
             }
             do {
               c = this.getNextChar();
@@ -255,11 +257,11 @@ define([
             charCode = c.charCodeAt(0);
             if(charCode < 48 || charCode >= 56) { // Only '0' to '7' are allowed
               this.backupOneChar();
-              return {
-                error: Errors.TOKEN,
+              throw new Exceptions.TokenizeError({
+                message: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN,
                 lineNum: this.lineNum
-              };
+              });
             }
             do {
               c = this.getNextChar();
@@ -268,11 +270,11 @@ define([
             c = this.getNextChar();
             if(c !== '0' && c !== '1') {
               this.backupOneChar();
-              return {
-                error: Errors.TOKEN,
+              throw new Exceptions.TokenizeError({
+                message: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN,
                 lineNum: this.lineNum
-              };
+              });
             }
             do {
               c = this.getNextChar();
@@ -294,11 +296,11 @@ define([
               return this.imaginary();
             } else if (nonZero) {
               this.backupOneChar();
-              return {
-                error: Errors.TOKEN,
+              throw new Exceptions.TokenizeError({
+                message: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN,
                 lineNum: this.lineNum
-              };
+              });
             }
           }
         } else {
@@ -363,11 +365,11 @@ define([
         c = this.getNextChar();
         if(!this.isDigit(c)) {
           this.backupOneChar();
-          return {
-            error: Errors.TOKEN,
+          throw new Exceptions.TokenizeError({
+            message: Errors.TOKEN,
             token: Tokens.ERRORTOKEN,
             lineNum: this.lineNum
-          };
+          });
         }
       } else if(!this.isDigit(c)) {
         this.backupOneChar();
@@ -437,13 +439,25 @@ define([
           c = this.getNextChar();
           if(!c) {
             if(quoteSize === 3) {
-              return { error: Errors.EOFS, token: Tokens.ERRORTOKEN, lineNum: this.lineNum };
+              throw new Exceptions.TokenizeError({
+                message: Errors.EOFS,
+                token: Tokens.ERRORTOKEN,
+                lineNum: this.lineNum
+              });
             } else {
-              return { error: Errors.EOLS, token: Tokens.ERRORTOKEN, lineNum: this.lineNum };
+              throw new Exceptions.TokenizeError({
+                message: Errors.EOLS,
+                token: Tokens.ERRORTOKEN,
+                lineNum: this.lineNum
+              });
             }
           }
           if(quoteSize === 1 && c === '\n') {
-            return { error: Errors.EOLS, token: Tokens.ERRORTOKEN, lineNum: this.lineNum };
+            throw new Exceptions.TokenizeError({
+              message: Errors.EOLS,
+              token: Tokens.ERRORTOKEN,
+              lineNum: this.lineNum
+            });
           }
           if(c === quote) {
             endQuoteSize += 1;
@@ -471,11 +485,11 @@ define([
       if(c === '\\') {
         c = this.getNextChar();
         if(c !== '\n') {
-          return {
-            error: Errors.LINECONT,
+          throw new Exceptions.TokenizeError({
+            message: Errors.LINECONT,
             token: Tokens.ERRORTOKEN,
             lineNum: this.lineNum
-          };
+          });
         }
         this.contLine = true;
         return this.again();
@@ -591,11 +605,11 @@ define([
       if(!this.blankline && this.level === 0) {
         if(col > this.indstack[this.indent]) {
           if(this.indent + 1 >= MAXINDENT) {
-            return {
-              error: Errors.TOODEEP,
+            throw new Exceptions.TokenizeError({
+              message: Errors.TOODEEP,
               token: Tokens.ERRORTOKEN,
               lineNum: this.lineNum
-            };
+            });
           }
           this.pending++;
           this.indstack[++this.indent] = col;
@@ -605,11 +619,11 @@ define([
             this.indent--;
           }
           if(col !== this.indstack[this.indent]) {
-            return {
-              error: Errors.DEDENT,
+            throw new Exceptions.TokenizeError({
+              message: Errors.DEDENT,
               token: Tokens.ERRORTOKEN,
               lineNum: this.lineNum
-            };
+            });
           }
         }
       }

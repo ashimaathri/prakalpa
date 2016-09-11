@@ -26,7 +26,11 @@ define([
     },
 
     getNextToken: function () {
-      this.appendObjectToTextBox(this.tokenizer.getNext());
+      try {
+        this.appendObjectToTextBox(this.tokenizer.getNext());
+      } catch(e) {
+        this.appendObjectToTextBox(e);
+      }
     },
 
     appendObjectToTextBox: function (tokenInfo) {
@@ -43,8 +47,13 @@ define([
       var tokenInfo;
 
       do {
-        tokenInfo = this.tokenizer.getNext();
-        this.appendObjectToTextBox(tokenInfo);
+        try {
+          tokenInfo = this.tokenizer.getNext();
+          this.appendObjectToTextBox(tokenInfo);
+        } catch (e) {
+          this.appendObjectToTextBox(e);
+          break;
+        }
       } while(tokenInfo.token !== 'ENDMARKER');
     },
 

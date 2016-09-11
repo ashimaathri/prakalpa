@@ -27,21 +27,24 @@ define([
     assert.strictEqual(tokenizer.getNext().token, 'ENDMARKER');
   };
 
-  assertError = function (sourceText, errorString) {
+  assertError = function (sourceText, expectedExceptionInfo) {
     var tokenizer, tokenInfo;
 
     tokenizer = new Tokenizer({ sourceText: sourceText });
 
     do {
-      tokenInfo = tokenizer.getNext();
-    } while(tokenInfo.token !== 'ERRORTOKEN' && tokenInfo.token !== 'ENDMARKER'); 
-
-    assert.strictEqual(tokenInfo.token, 'ERRORTOKEN');
-    assert.strictEqual(tokenInfo.error, errorString);
+      try {
+        tokenInfo = tokenizer.getNext();
+      } catch(e) {
+        for(var key in expectedExceptionInfo) {
+          assert.deepEqual(expectedExceptionInfo[key], e[key]);
+        }
+      }
+    } while(tokenInfo.token !== 'ENDMARKER'); 
   };
 
   registerSuite({
-    name: 'Tokenzier',
+    name: 'Tokenizer',
 
     'Hello world!': function () {
       assertTokensEqual('Hello world!', [
@@ -75,7 +78,11 @@ define([
     },
 
     'indent error': function () {
-      assertError('def k(x):\n    x += 2\n  x += 5\n', 'No matching outer block for dedent');
+      assertError('def k(x):\n    x += 2\n  x += 5\n', {
+        message: 'No matching outer block for dedent',
+        token: 'ERRORTOKEN',
+        lineNum: 3,
+      });
     },
 
     'if x == 1:\n    print(x)\n': function () {
