@@ -6,7 +6,7 @@ define([
   'prakalpa/parser/meta_grammar',
   'prakalpa/parser/main',
   'prakalpa/parser/pgen',
-  'prakalpa/parser/non_terminals',
+  'prakalpa/constants/non_terminals',
   'dojo/request/xhr',
   'dojo/NodeList-manipulate'
 ], function (declare, lang, query, Tokenizer, metagrammarDFAs, Parser,

@@ -1043,6 +1043,21 @@ define([
         { token: "COLON", start: { column: 15, lineNum: 2 }, end: { column: 16, lineNum: 2 }},
         { token: "NAME", start: { column: 17, lineNum: 2 }, end: { column: 21, lineNum: 2 }}
       ]);
+    },
+
+    'myList[1:2, ..., 0]': function () {
+      assertTokensEqual('myList[1:2, ..., 0]', [
+				{"token":"NAME","start":{"column":0,"lineNum":1},"end":{"column":6,"lineNum":1},"string":"myList"},
+				{"token":"LSQB","start":{"column":6,"lineNum":1},"end":{"column":7,"lineNum":1},"string":"["},
+				{"token":"NUMBER","start":{"column":7,"lineNum":1},"end":{"column":8,"lineNum":1},"string":"1"},
+				{"token":"COLON","start":{"column":8,"lineNum":1},"end":{"column":9,"lineNum":1},"string":":"},
+				{"token":"NUMBER","start":{"column":9,"lineNum":1},"end":{"column":10,"lineNum":1},"string":"2"},
+				{"token":"COMMA","start":{"column":10,"lineNum":1},"end":{"column":11,"lineNum":1},"string":","},
+				{"token":"ELLIPSIS","start":{"column":12,"lineNum":1},"end":{"column":15,"lineNum":1},"string":"..."},
+				{"token":"COMMA","start":{"column":15,"lineNum":1},"end":{"column":16,"lineNum":1},"string":","},
+				{"token":"NUMBER","start":{"column":17,"lineNum":1},"end":{"column":18,"lineNum":1},"string":"0"},
+				{"token":"RSQB","start":{"column":18,"lineNum":1},"end":{"column":19,"lineNum":1},"string":"]"}
+      ]);
     }
   });
 }); 

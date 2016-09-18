@@ -5,8 +5,8 @@
 define([
   'dojo/_base/declare',
   'dojo/_base/lang',
-  'prakalpa/tokens',
-  'prakalpa/errors',
+  'prakalpa/constants/tokens',
+  'prakalpa/constants/errors',
   'prakalpa/exceptions'
 ], function (declare, lang, Tokens, Errors, Exceptions) {
   var MAXINDENT;
@@ -14,6 +14,9 @@ define([
   MAXINDENT = 100;
 
   return declare([], {
+    /**
+     * sourceText: Source that needs to be tokenized
+     */
     constructor: function (opts) {
       lang.mixin(this, opts);
       this.atBeginningOfLine = true;
@@ -29,7 +32,18 @@ define([
       this.lines = this.sourceText.split('\n');
     },
 
-    getString: function (start, end) {
+    /* Entrypoint into the tokenizer. Returns the next token in the stream*/
+    getNext: function () {
+      return this._nextline();
+    },
+
+    /**
+      * Returns the value of the token starting at position `start` and ending
+      * just before position `end` both columnwise and linewise
+      * start: {column, lineNum}
+      * end: {column, lineNum}
+      */
+    _getString: function (start, end) {
       var startLine, endLine, startColumn, endColumn, string, i;
 
       startColumn = start.column;
@@ -49,7 +63,10 @@ define([
       return string;
     },
 
-    getNextChar: function () {
+    /* Get the next character in the stream and keep track of line number and
+     * column number
+     */
+    _getNextChar: function () {
       if(this.sourceText[this.charIndex] === '\n') {
         this.lineNum++;
         this.colNum = -1;
@@ -60,7 +77,8 @@ define([
       return this.sourceText[this.charIndex];
     },
 
-    backupOneChar: function () {
+    /* Go back one character in the stream while accounting for newlines*/
+    _backupOneChar: function () {
       if(this.charIndex === -1) { return; }
       this.charIndex--;
       this.colNum--;
@@ -69,17 +87,13 @@ define([
       }
     },
 
-    getNext: function () {
-      return this.nextline();
-    },
-
-    nextline: function () {
+    _nextline: function () {
       this.startOfToken = { column: 0, lineNum: this.lineNum };
       this.blankline = false;
 
       if(this.atBeginningOfLine) {
         this.atBeginningOfLine = false;
-        this.countIndentsAndDedents();
+        this._countIndentsAndDedents();
       }
 
       this.startOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
@@ -96,15 +110,15 @@ define([
 
       // TODO Add support for async
 
-      return this.again();
+      return this._again();
     },
 
-    verifyIdentifier: function () {
+    _verifyIdentifier: function () {
       // TODO Add support for Unicode
       return false;
     },
 
-    processNames: function (c) {
+    _processNames: function (c) {
       var nonascii, saw_b, saw_r, saw_u, endOfToken;
 
       nonascii = false;
@@ -120,23 +134,23 @@ define([
         } else {
           break;
         }
-        c = this.getNextChar();
+        c = this._getNextChar();
 
         if(c === '"' || c === "'") {
-          return this.letterQuote(c);
+          return this._letterQuote(c);
         }
       }
 
-      while (this.isPotentialIdentifierChar(c)) {
+      while (this._isPotentialIdentifierChar(c)) {
         if(c.charCodeAt(0) >= 128) {
           nonascii = true;
         }
-        c = this.getNextChar();
+        c = this._getNextChar();
       }
 
-      this.backupOneChar();
+      this._backupOneChar();
 
-      if(nonascii && !this.verifyIdentifier()) {
+      if(nonascii && !this._verifyIdentifier()) {
         throw new Exceptions.TokenizeError({
           message: Errors.TOKEN,
           token: Tokens.ERRORTOKEN,
@@ -151,98 +165,98 @@ define([
         token: Tokens.NAME,
         start: this.startOfToken,
         end: endOfToken,
-        string: this.getString(this.startOfToken, endOfToken)
+        string: this._getString(this.startOfToken, endOfToken)
       };
     },
 
-    again: function () {
+    _again: function () {
       var c, endOfToken;
 
       //TODO Add support for tabs and form feeds
-      do { c = this.getNextChar(); } while (c === ' ');
+      do { c = this._getNextChar(); } while (c === ' ');
 
       this.startOfToken = { column: this.colNum, lineNum: this.lineNum };
 
       if(c === '#') {
-        while (c && c !== '\n') { c = this.getNextChar(); }
+        while (c && c !== '\n') { c = this._getNextChar(); }
       }
 
       if(!c) {
         return { token: Tokens.ENDMARKER, lineNum: this.lineNum };
       }
 
-      if(this.isPotentialIdentifierStart(c)) {
-        return this.processNames(c);
+      if(this._isPotentialIdentifierStart(c)) {
+        return this._processNames(c);
       }
 
       if(c === '\n') {
         this.atBeginningOfLine = true;
-        if(this.blankline || this.level > 0) { return this.nextline(); }
+        if(this.blankline || this.level > 0) { return this._nextline(); }
         this.contLine = false;
         endOfToken = { column: this.colNum, lineNum: this.lineNum };
         return {
           token: Tokens.NEWLINE,
           start: this.startOfToken,
           end: endOfToken,
-          string: this.getString(this.startOfToken, endOfToken)
+          string: this._getString(this.startOfToken, endOfToken)
         };
       }
 
-      return this.startWithPeriod(c);
+      return this._startWithPeriod(c);
     },
 
-    startWithPeriod: function (c) {
+    _startWithPeriod: function (c) {
       var endOfToken;
 
       if(c === '.') {
-        c = this.getNextChar();
-        if(this.isDigit(c)) {
-          return this.fraction();
+        c = this._getNextChar();
+        if(this._isDigit(c)) {
+          return this._fraction();
         } else if(c === '.') {
-          c = this.getNextChar();
+          c = this._getNextChar();
           if(c === '.') {
             endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
             return {
               token: Tokens.ELLIPSIS,
               start: this.startOfToken,
               end: endOfToken,
-              string: this.getString(this.startOfToken, endOfToken)
+              string: this._getString(this.startOfToken, endOfToken)
             };
           } else {
-            this.backupOneChar();
+            this._backupOneChar();
           }
-          this.backupOneChar();
+          this._backupOneChar();
         } else {
-          this.backupOneChar();
+          this._backupOneChar();
         }
         endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
         return {
           token: Tokens.DOT,
           start: this.startOfToken,
           end: endOfToken,
-          string: this.getString(this.startOfToken, endOfToken)
+          string: this._getString(this.startOfToken, endOfToken)
         };
       }
 
-      return this.isNumber(c);
+      return this._isNumber(c);
     },
 
-    isNumber: function (c) {
+    _isNumber: function (c) {
       var nonZero, charCode, endOfToken;
 
-      if(this.isDigit(c)) {
+      if(this._isDigit(c)) {
         if(c === '0') {
-          c = this.getNextChar();
+          c = this._getNextChar();
           if(c === '.') {
-            return this.fraction();
+            return this._fraction();
           }
           if(c === 'j' || c === 'J') {
-            return this.imaginary();
+            return this._imaginary();
           }
           if(c === 'x' || c === 'X') {
-            c = this.getNextChar();
-            if(!this.isXDigit(c)) {
-              this.backupOneChar();
+            c = this._getNextChar();
+            if(!this._isXDigit(c)) {
+              this._backupOneChar();
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN,
@@ -250,13 +264,13 @@ define([
               });
             }
             do {
-              c = this.getNextChar();
-            } while(this.isXDigit(c));
+              c = this._getNextChar();
+            } while(this._isXDigit(c));
           } else if(c === 'o' || c === 'O') {
-            c = this.getNextChar();
+            c = this._getNextChar();
             charCode = c.charCodeAt(0);
             if(charCode < 48 || charCode >= 56) { // Only '0' to '7' are allowed
-              this.backupOneChar();
+              this._backupOneChar();
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN,
@@ -264,12 +278,12 @@ define([
               });
             }
             do {
-              c = this.getNextChar();
+              c = this._getNextChar();
             } while (c && 48 <= c.charCodeAt(0) && c.charCodeAt(0) < 56);
           } else if(c === 'b' || c === 'B') {
-            c = this.getNextChar();
+            c = this._getNextChar();
             if(c !== '0' && c !== '1') {
-              this.backupOneChar();
+              this._backupOneChar();
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN,
@@ -277,25 +291,25 @@ define([
               });
             }
             do {
-              c = this.getNextChar();
+              c = this._getNextChar();
             } while (c === '0' || c === '1');
           } else {
             nonZero = false;
             while(c === '0') {
-              c = this.getNextChar();
+              c = this._getNextChar();
             }
-            while(this.isDigit(c)) {
+            while(this._isDigit(c)) {
               nonZero = true;
-              c = this.getNextChar();
+              c = this._getNextChar();
             }
             if(c === '.') {
-              return this.fraction();
+              return this._fraction();
             } else if(c === 'e' || c === 'E') {
-              return this.exponent();
+              return this._exponent();
             } else if(c === 'j' || c === 'J') {
-              return this.imaginary();
+              return this._imaginary();
             } else if (nonZero) {
-              this.backupOneChar();
+              this._backupOneChar();
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 token: Tokens.ERRORTOKEN,
@@ -305,102 +319,102 @@ define([
           }
         } else {
           do {
-            c = this.getNextChar();
-          } while (this.isDigit(c));
+            c = this._getNextChar();
+          } while (this._isDigit(c));
 
           if(c === '.') {
-            return this.fraction();
+            return this._fraction();
           }
 
           if(c === 'e' || c === 'E') {
-            return this.exponent();
+            return this._exponent();
           }
 
           if(c === 'j' || c === 'J') {
-            return this.imaginary();
+            return this._imaginary();
           }
         }
-        this.backupOneChar();
+        this._backupOneChar();
         endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
         return {
           token: Tokens.NUMBER,
           start: this.startOfToken,
           end: endOfToken,
-          string: this.getString(this.startOfToken, endOfToken)
+          string: this._getString(this.startOfToken, endOfToken)
         };
       }
-      return this.letterQuote(c);
+      return this._letterQuote(c);
     },
 
-    fraction: function (c) {
+    _fraction: function (c) {
       var endOfToken;
 
       do {
-        c = this.getNextChar();
-      } while (this.isDigit(c));
+        c = this._getNextChar();
+      } while (this._isDigit(c));
 
       if(c === 'e' || c === 'E') {
-        return this.exponent();
+        return this._exponent();
       }
 
       if(c === 'j' || c === 'J') {
-        return this.imaginary();
+        return this._imaginary();
       }
 
-      this.backupOneChar();
+      this._backupOneChar();
       endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
       return {
         token: Tokens.NUMBER,
         start: this.startOfToken,
         end: endOfToken,
-        string: this.getString(this.startOfToken, endOfToken)
+        string: this._getString(this.startOfToken, endOfToken)
       };
     },
 
-    exponent: function () {
+    _exponent: function () {
       var c, endOfToken;
 
-      c = this.getNextChar();
+      c = this._getNextChar();
       if(c === '+' || c === '-') {
-        c = this.getNextChar();
-        if(!this.isDigit(c)) {
-          this.backupOneChar();
+        c = this._getNextChar();
+        if(!this._isDigit(c)) {
+          this._backupOneChar();
           throw new Exceptions.TokenizeError({
             message: Errors.TOKEN,
             token: Tokens.ERRORTOKEN,
             lineNum: this.lineNum
           });
         }
-      } else if(!this.isDigit(c)) {
-        this.backupOneChar();
-        this.backupOneChar();
+      } else if(!this._isDigit(c)) {
+        this._backupOneChar();
+        this._backupOneChar();
         endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
         return {
           token: Tokens.NUMBER,
           start: this.startOfToken,
           end: endOfToken,
-          string: this.getString(this.startOfToken, endOfToken)
+          string: this._getString(this.startOfToken, endOfToken)
         };
       }
       do {
-        c = this.getNextChar();
-      } while(this.isDigit(c));
+        c = this._getNextChar();
+      } while(this._isDigit(c));
 
       if(c === 'j' || c === 'J') {
-        return this.imaginary();
+        return this._imaginary();
       }
 
-      this.backupOneChar();
+      this._backupOneChar();
       endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
       return {
         token: Tokens.NUMBER,
         start: this.startOfToken,
         end: endOfToken,
-        string: this.getString(this.startOfToken, endOfToken)
+        string: this._getString(this.startOfToken, endOfToken)
       };
     },
 
-    imaginary: function () {
+    _imaginary: function () {
       var endOfToken;
 
       endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
@@ -409,11 +423,11 @@ define([
         token: Tokens.NUMBER,
         start: this.startOfToken,
         end: endOfToken,
-        string: this.getString(this.startOfToken, endOfToken)
+        string: this._getString(this.startOfToken, endOfToken)
       };
     },
 
-    letterQuote: function (c) {
+    _letterQuote: function (c) {
       var quote, quoteSize, endQuoteSize, endOfToken;
 
       if(c === '"' || c === "'") {
@@ -421,9 +435,9 @@ define([
         quoteSize = 1;
         endQuoteSize = 0;
 
-        c = this.getNextChar();
+        c = this._getNextChar();
         if(c === quote) {
-          c = this.getNextChar();
+          c = this._getNextChar();
           if(c === quote) {
             quoteSize = 3;
           } else {
@@ -432,11 +446,11 @@ define([
         }
 
         if(c !== quote) {
-          this.backupOneChar();
+          this._backupOneChar();
         }
 
         while(endQuoteSize !== quoteSize) {
-          c = this.getNextChar();
+          c = this._getNextChar();
           if(!c) {
             if(quoteSize === 3) {
               throw new Exceptions.TokenizeError({
@@ -464,7 +478,7 @@ define([
           } else {
             endQuoteSize = 0;
             if(c === '\\') {
-              c = this.getNextChar();
+              c = this._getNextChar();
             }
           }
         }
@@ -474,16 +488,16 @@ define([
           token: Tokens.STRING,
           start: this.startOfToken,
           end: endOfToken,
-          string: this.getString(this.startOfToken, endOfToken)
+          string: this._getString(this.startOfToken, endOfToken)
         };
       }
 
-      return this.lineContinuation(c);
+      return this._lineContinuation(c);
     },
 
-    lineContinuation: function (c) {
+    _lineContinuation: function (c) {
       if(c === '\\') {
-        c = this.getNextChar();
+        c = this._getNextChar();
         if(c !== '\n') {
           throw new Exceptions.TokenizeError({
             message: Errors.LINECONT,
@@ -492,39 +506,39 @@ define([
           });
         }
         this.contLine = true;
-        return this.again();
+        return this._again();
       }
 
-      return this.twoCharacter(c);
+      return this._twoCharacter(c);
     },
 
-    twoCharacter: function (c) {
+    _twoCharacter: function (c) {
       var c2, c3, token, token3, endOfToken;
 
-      c2 = this.getNextChar();
+      c2 = this._getNextChar();
       token = this.twoCharToken(c, c2);
       if(token !== Tokens.OP) {
-        c3 = this.getNextChar();
+        c3 = this._getNextChar();
         token3 = this.threeCharToken(c, c2, c3);
         if(token3 !== Tokens.OP) {
           token = token3;
         } else {
-          this.backupOneChar();
+          this._backupOneChar();
         }
         endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
         return {
           token: token,
           start: this.startOfToken,
           end: endOfToken,
-          string: this.getString(this.startOfToken, endOfToken)
+          string: this._getString(this.startOfToken, endOfToken)
         };
       }
-      this.backupOneChar();
+      this._backupOneChar();
 
-      return this.parenthesesCheck(c);
+      return this._parenthesesCheck(c);
     },
 
-    parenthesesCheck: function (c) {
+    _parenthesesCheck: function (c) {
       switch(c) {
         case '(':
         case '[':
@@ -538,10 +552,10 @@ define([
           break;
       }
 
-      return this.oneCharacter(c);
+      return this._oneCharacter(c);
     },
 
-    oneCharacter: function (c) {
+    _oneCharacter: function (c) {
       var endOfToken;
 
       endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
@@ -550,11 +564,11 @@ define([
         token: this.oneCharToken(c),
         start: this.startOfToken,
         end: endOfToken,
-        string: this.getString(this.startOfToken, endOfToken)
+        string: this._getString(this.startOfToken, endOfToken)
       };
     },
 
-    isPotentialIdentifierStart: function (c) {
+    _isPotentialIdentifierStart: function (c) {
       var code;
 
       if(typeof(c) === 'undefined') { return false; }
@@ -566,7 +580,7 @@ define([
               (c === '_'));
     },
 
-    isPotentialIdentifierChar: function (c) {
+    _isPotentialIdentifierChar: function (c) {
       var code;
 
       if(typeof(c) === 'undefined') { return false; }
@@ -579,20 +593,20 @@ define([
               (c === '_'));
     },
 
-    countIndentsAndDedents: function () {
+    _countIndentsAndDedents: function () {
       var col, c;
 
       col = 0;
 
       // Supporting only whitespace for now.
       // TODO Add support for tabs and form-feed
-      c = this.getNextChar();
+      c = this._getNextChar();
       while(c === ' ') {
         col++;
-        c = this.getNextChar();
+        c = this._getNextChar();
       }
 
-      this.backupOneChar();
+      this._backupOneChar();
 
       // TODO Add support for interactive mode
       if(c === '\#' || c === '\n') {
@@ -629,7 +643,7 @@ define([
       }
     },
 
-    isDigit: function (c) {
+    _isDigit: function (c) {
       var charCode;
 
       if(typeof(c) === 'undefined') { return false; }
@@ -637,12 +651,12 @@ define([
       return (charCode > 47 && charCode < 58);
     },
 
-    isXDigit: function (c) {
+    _isXDigit: function (c) {
       var charCode;
 
       if(typeof(c) === 'undefined') { return false; }
       charCode = c.charCodeAt(0);
-      return (this.isDigit(c) || 
+      return (this._isDigit(c) || 
              (charCode >= 65 && charCode <= 70) || // A to F
              (charCode >= 97 && charCode <= 102)); // a to f
     },

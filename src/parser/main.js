@@ -9,11 +9,12 @@ define([
   'prakalpa/tokenizer',
   'prakalpa/parser/stack',
   'prakalpa/parser/parse_tree_node',
-  'prakalpa/parser/status_codes',
-  'prakalpa/tokens',
-  'prakalpa/parser/non_terminals',
+  'prakalpa/constants/status_codes',
+  'prakalpa/constants/tokens',
+  'prakalpa/constants/non_terminals',
+  'prakalpa/exceptions',
 ], function (declare, lang, array, Tokenizer, Stack, ParseTreeNode,
-             ParserStatus, Tokens, NonTerminals) {
+             ParserStatus, Tokens, NonTerminals, Exceptions) {
   return declare([], {
     /**
       * grammar: Dictionary of nonTerminal(key), dfa(value)
@@ -175,11 +176,11 @@ define([
         if(currentState.isAccepting) {
           this.stack.pop();
           if(this.stack.isEmpty()) {
-            return ParserStatus.SYNTAX_ERROR;
+            throw new Exceptions.SyntaxError();
           }
           continue;
         }
-        return ParserStatus.SYNTAX_ERROR;
+        throw new Exceptions.SyntaxError();
       }
     }
   });

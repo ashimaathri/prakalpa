@@ -2,8 +2,8 @@ define([
   'dojo/_base/declare',
   'dojo/_base/lang',
   'dojo/_base/array',
-  'prakalpa/parser/non_terminals',
-  'prakalpa/tokens',
+  'prakalpa/constants/non_terminals',
+  'prakalpa/constants/tokens',
   'prakalpa/tokenizer',
   'prakalpa/parser/nfa',
   'prakalpa/parser/dfa'

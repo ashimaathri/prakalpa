@@ -1,7 +1,7 @@
 define([
   'dojo/_base/declare',
   'dojo/_base/lang',
-  'prakalpa/tokens'
+  'prakalpa/constants/tokens'
 ], function (declare, lang, Terminals) {
   return declare([], {
     constructor: function (opts) {

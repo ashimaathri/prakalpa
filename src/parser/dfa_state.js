@@ -1,7 +1,7 @@
 define([
   'dojo/_base/declare',
   'dojo/_base/array',
-  'prakalpa/tokens'
+  'prakalpa/constants/tokens'
 ], function (declare, array, Terminals) {
   var DFAState;
 

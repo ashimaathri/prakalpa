@@ -3,7 +3,7 @@ define([
   'dojo/_base/lang',
   'dojo/_base/array',
   'prakalpa/parser/dfa_state',
-  'prakalpa/tokens',
+  'prakalpa/constants/tokens',
   'prakalpa/exceptions'
 ], function (declare, lang, array, DFAState, Terminals, Exceptions) {
   var START_MARKER;
