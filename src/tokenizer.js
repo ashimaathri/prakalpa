@@ -47,8 +47,8 @@ define([
     },
 
     /**
-      * Returns the value of the token starting at position {start} and ending
-      * just before position {end} both columnwise and linewise
+      * Returns the value of the token starting at position `start` and ending
+      * just before position `end` both columnwise and linewise
       * @private
       * @param {Object} start - The position at which the token starts
       * @param {Number} start.column - The column number in a line at which the token starts 
@@ -108,6 +108,11 @@ define([
       }
     },
 
+    /**
+      * Processes one line and keeps track of indents and dedents.
+      * Corresponds to the `nextline` goto label in cpython's `tok_get` function.
+      * @private
+      */
     _nextline: function () {
       this.startOfToken = { column: 0, lineNum: this.lineNum };
       this.blankline = false;
@@ -122,10 +127,16 @@ define([
       if(this.pending !== 0) {
         if(this.pending < 0) {
           this.pending++;
-          return { type: Tokens.DEDENT, lineNum: this.lineNum };
+          return Token({
+            type: Tokens.DEDENT,
+            start: this.startOfToken
+          });
         } else {
           this.pending--;
-          return { type: Tokens.INDENT, lineNum: this.lineNum }; 
+          return Token({
+            type: Tokens.INDENT,
+            start: this.startOfToken
+          }); 
         }
       }
 
@@ -134,11 +145,19 @@ define([
       return this._again();
     },
 
+    /**
+      * Checks if an identifier is a proper unicode string PEP 3131 (TODO)
+      * @private
+      */
     _verifyIdentifier: function () {
-      // TODO Add support for Unicode
       return false;
     },
 
+    /**
+      * Checks for an identifier which is the most frequent token
+      * @private
+	    * @param {String} c - The next character in the source
+      */
     _processNames: function (c) {
       var nonascii, saw_b, saw_r, saw_u, endOfToken;
 
@@ -190,6 +209,10 @@ define([
       });
     },
 
+    /** Equivalent to the `again` label in cpython's `tok_get`
+      * Processes newlines and the endmarker.
+      * @private
+      */
     _again: function () {
       var c, endOfToken;
 
@@ -203,7 +226,10 @@ define([
       }
 
       if(!c) {
-        return { type: Tokens.ENDMARKER, lineNum: this.lineNum };
+        return Token({
+          type: Tokens.ENDMARKER,
+          start: this.startOfToken
+        });
       }
 
       if(this._isPotentialIdentifierStart(c)) {
@@ -226,6 +252,11 @@ define([
       return this._startWithPeriod(c);
     },
 
+    /**
+      * If the token begins with a period, processes that token, else
+      * calls the next processor in line
+      * @private
+      */
     _startWithPeriod: function (c) {
       var endOfToken;
 
@@ -262,6 +293,11 @@ define([
       return this._isNumber(c);
     },
 
+    /**
+      * If the token is a number, processes that token, else
+      * calls the next processor in line
+      * @private
+      */
     _isNumber: function (c) {
       var nonZero, charCode, endOfToken;
 
@@ -367,6 +403,10 @@ define([
       return this._letterQuote(c);
     },
 
+    /**
+      * Processes a fraction token. Equivalent to the `fraction` label in cpython's `tok_get`
+      * @private
+      */
     _fraction: function (c) {
       var endOfToken;
 
@@ -392,6 +432,10 @@ define([
       });
     },
 
+    /**
+      * Processes an exponent token. Equivalent to the `exponent` label in cpython's `tok_get`
+      * @private
+      */
     _exponent: function () {
       var c, endOfToken;
 
@@ -435,6 +479,10 @@ define([
       });
     },
 
+    /**
+      * Processes an imaginary token. Equivalent to the `imaginary` label in cpython's `tok_get`
+      * @private
+      */
     _imaginary: function () {
       var endOfToken;
 
@@ -448,6 +496,12 @@ define([
       });
     },
 
+    /**
+      * If token is a string token, processes that token, else
+      * continues to the next processor in line.
+      * Equivalent to the `letter_quote` label in cpython's `tok_get`
+      * @private
+      */
     _letterQuote: function (c) {
       var quote, quoteSize, endQuoteSize, endOfToken;
 
@@ -516,6 +570,11 @@ define([
       return this._lineContinuation(c);
     },
 
+    /**
+      * If there's a line continuation in the source, processes that
+      * and continues to the next processor in line.
+      * @private
+      */
     _lineContinuation: function (c) {
       if(c === '\\') {
         c = this._getNextChar();
@@ -533,6 +592,10 @@ define([
       return this._twoCharacter(c);
     },
 
+    /**
+      * Processes a two character token else continues to the next processor in line
+      * @private
+      */
     _twoCharacter: function (c) {
       var c2, c3, token, token3, endOfToken;
 
@@ -559,6 +622,10 @@ define([
       return this._parenthesesCheck(c);
     },
 
+    /**
+      * Matches braces, parenthesis and square brackets
+      * @private
+      */
     _parenthesesCheck: function (c) {
       switch(c) {
         case '(':
@@ -576,6 +643,10 @@ define([
       return this._oneCharacter(c);
     },
 
+    /**
+      * Processes a one character token else continues to the next processor in line
+      * @private
+      */
     _oneCharacter: function (c) {
       var endOfToken;
 
@@ -589,6 +660,10 @@ define([
       });
     },
 
+    /**
+      * Checks if the token begins with a valid identifier start character 
+      * @private
+      */
     _isPotentialIdentifierStart: function (c) {
       var code;
 
@@ -601,6 +676,10 @@ define([
               (c === '_'));
     },
 
+    /**
+      * Checks if the char is a valid identifier character 
+      * @private
+      */
     _isPotentialIdentifierChar: function (c) {
       var code;
 
@@ -614,6 +693,24 @@ define([
               (c === '_'));
     },
 
+    /**
+      * Matches indents and dedents
+      * Algorithm description taken from [Tokens and Python's Lexical Structure](https://www.ics.uci.edu/~pattis/ICS-31/lectures/tokens.pdf) 
+			* 1. Ensure that the first line has no indentation (0 white-space characters); if it does, report an error.
+      *    If it doesn't, initialize the list with the value 0.
+			* 2. For each logical line (after line–joining)
+			* 	1. If the current line’s indentation is > the indentation at the list’s end
+			* 		1. Add the current line’s indentation to the end of the list.
+			* 		2. Produce an INDENT token.
+			* 	2. If the current line’s indentation is < the indentation at the list’s end
+			* 		1. For each value at the end of the list that is unequal to the current line’s
+      *        indentation (if it is not in the list, report a lexical error).
+			* 			1. Remove the value from the end of the list.
+			* 			2. Produce a DEDENT token.
+			* 	3. Tokenize the current line.
+			* 3. For every indentation on the list except 0, produce a DEDENT token.
+      * @private
+      */
     _countIndentsAndDedents: function () {
       var col, c;
 
@@ -664,6 +761,10 @@ define([
       }
     },
 
+		/**
+	    * Checks if character is a decimal digit or not
+      * @private
+      */
     _isDigit: function (c) {
       var charCode;
 
@@ -672,6 +773,10 @@ define([
       return (charCode > 47 && charCode < 58);
     },
 
+		/**
+	    * Checks if character is a hexadecimal digit or not
+      * @private
+      */
     _isXDigit: function (c) {
       var charCode;
 

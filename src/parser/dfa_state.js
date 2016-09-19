@@ -11,10 +11,6 @@ define([
       this.arcs = {};
     },
 
-    addNFAState: function (nfaState) {
-      this.nfaStates.push(nfaState);
-    },
-
     nfaStateAbsent: function (nfaState) {
       return (this.nfaStates.indexOf(nfaState) === -1);
     },
@@ -37,7 +33,7 @@ define([
 
     addClosure: function (nfaState) {
       if(this.nfaStateAbsent(nfaState)) {
-        this.addNFAState(nfaState);
+        this.nfaStates.push(nfaState);
         array.forEach(nfaState, function (arc) {
           if(arc.label === Terminals.EMPTY) {
             this.addClosure(arc.arrow);

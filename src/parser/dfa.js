@@ -9,14 +9,13 @@ define([
   var START_MARKER;
 
   /**
+    * Represents a DFA (deterministic finite automaton)
     * @class prakalpa.parser.DFA
+    * @param {Object} opts
+    * @param {String} opts.type - NonTerminal constant that represents this DFA 
+    * @param {prakalpa.parser.NFA} opts.nfa - The NFA from which the DFA must be constructed
     */
-  return declare([], {
-    /*
-     * @constructor 
-     * @param {string} type - NonTerminal constant that represents this DFA 
-     * @param {prakalpa.parser.nfa} nfa - The NFA from which the DFA must be constructed
-     */
+  return declare([], /** @lends prakalpa.parser.DFA.prototype */{
     constructor: function (opts) {
       lang.mixin(this, opts);
 
@@ -30,10 +29,15 @@ define([
       }
       this.states.push(this.start);
 
-      this.generateDFA(this.start);
+      this._generateDFA(this.start);
     },
 
-    generateDFA: function (state) {
+    /**
+      * Generates DFAs recursively, starting at the start state that has already been constructed in the constructor, and visiting the nfa nodes reachable from all the states in the start state
+      * @private
+      * @param {prakalpa.parser.DFAState} state - DFA state to start discovery from
+      */
+    _generateDFA: function (state) {
       var arcs, label, dfaState;
 
       array.forEach(state.getNFAStates(), function (nfaState) {
@@ -51,13 +55,19 @@ define([
         if(dfaState.containsNFAState(this.nfa.end)) {
           dfaState.setAsEndState();
         }
-        if(this.addState(dfaState)) {
-          this.generateDFA(dfaState);
+        if(this._addState(dfaState)) {
+          this._generateDFA(dfaState);
         }
       }
     },
 
-    addState: function (dfaState) {
+    /**
+      * Adds a DFA state to the list only if not already present.
+      * @private
+      * @param {prakalpa.parser.DFAState} dfaState - DFA state to add to list
+      * @returns {Boolean} newState? - True if new state, false if state is already in the list
+      */
+    _addState: function (dfaState) {
       var contains, newState;
 
       contains = array.filter(this.states, function (state) {
@@ -73,6 +83,11 @@ define([
       return newState;
     },
 
+    /**
+      * Calculates the firstSet of this DFA
+      * @param {Object.<String, prakalpa.parser.DFA>} dfaGrammar - A map containing all the DFAs for this grammar
+      * @return {Object.<String, Boolean>} firstSet - A dict (used for fast membership checks) with all the labels of the firstSet as keys. The value doesn't matter. 
+      */
     calcFirstSet: function (dfaGrammar) {
       var visited, result, label;
 

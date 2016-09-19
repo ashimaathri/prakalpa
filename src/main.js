@@ -1,3 +1,6 @@
+/**
+  * @namespace prakalpa
+  */
 define([
   'dojo/_base/declare',
   'dojo/_base/lang',
@@ -12,9 +15,6 @@ define([
 ], function (declare, lang, query, Tokenizer, metagrammarDFAs, Parser,
              ParserGenerator, NonTerminals, xhr) {
   return declare([], {
-    /**
-     * sourceText: Source that needs to be tokenized
-     */
     constructor: function (opts) {
       lang.mixin(this, opts);
     },
@@ -54,7 +54,7 @@ define([
           this.appendObjectToTextBox(e);
           break;
         }
-      } while(tokenInfo.token !== 'ENDMARKER');
+      } while(tokenInfo.type !== 'ENDMARKER');
     },
 
     construct_parse_tree: function (pathToGrammarFile, callback) {

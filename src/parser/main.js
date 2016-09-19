@@ -15,12 +15,13 @@ define([
   'prakalpa/exceptions',
 ], function (declare, lang, array, Tokenizer, Stack, ParseTreeNode,
              ParserStatus, Tokens, NonTerminals, Exceptions) {
+  /**
+    * @class prakalpa.parser
+    * @param {prakalpa.parser.grammar} grammar
+    * @param {prakalpa.constants.NonTerminal} start
+    * @param {string} sourceText
+    */
   return declare([], {
-    /**
-      * grammar: Dictionary of nonTerminal(key), dfa(value)
-      * start: nonTerminal for start symbol
-      * sourceText: Source that needs to be parsed
-      **/
     constructor: function (opts) {
       var start_symbol_dfa;
 
@@ -111,24 +112,25 @@ define([
     },
 
     parse: function () {
-      var tokenInfo, parseStatus;
+      var token, parseStatus;
 
       do {
-        tokenInfo = this.tokenizer.getNext();
-        if(tokenInfo.token === Tokens.ERRORTOKEN) {
-          return tokenInfo.error;
+        try {
+          token = this.tokenizer.getNext();
+        } catch (e) {
+          return e;
         }
-        parseStatus = this.addToken(tokenInfo);
+        parseStatus = this.addToken(token);
         if(parseStatus !== ParserStatus.OK &&
            parseStatus !== ParserStatus.DONE) {
           return parseStatus; 
         }
-      } while(tokenInfo.token !== Tokens.ENDMARKER);
+      } while(token.type !== Tokens.ENDMARKER);
 
       return this.parseTreeRoot;
     },
 
-    addToken: function (tokenInfo) {
+    addToken: function (token) {
       var stackEntry, dfa, currentState, currentParseTreeNode, transition;
 
       for(;;) {
@@ -137,24 +139,24 @@ define([
         currentParseTreeNode = stackEntry.currentParseTreeNode;
         currentState = stackEntry.currentState;
 
-        if(tokenInfo.token in currentState.next) {
-          transition = currentState.next[tokenInfo.token];
+        if(token.type in currentState.next) {
+          transition = currentState.next[token.type];
 
           if(transition.nonTerminal) {
             this.push({
               nonTerminal: transition.nonTerminal,
               dfa: this.grammar[transition.nonTerminal],
               endState: dfa.states[transition.arrow],
-              lineNum: tokenInfo.lineNum || tokenInfo.start.lineNum
+              lineNum: token.start.lineNum
             }, currentParseTreeNode);
             continue;
           } else {
             this.shift({
-              terminal: tokenInfo.token,
+              terminal: token.type,
               endState: dfa.states[transition.arrow],
-              lineNum: tokenInfo.lineNum || tokenInfo.start.lineNum,
-              string: tokenInfo.string,
-              columnOffset: tokenInfo.start && tokenInfo.start.column
+              lineNum: token.start.lineNum,
+              string: token.string,
+              columnOffset: token.start.column
             }, currentParseTreeNode);
           }
 
@@ -176,11 +178,11 @@ define([
         if(currentState.isAccepting) {
           this.stack.pop();
           if(this.stack.isEmpty()) {
-            throw new Exceptions.SyntaxError();
+            throw new Exceptions.SyntaxError({ message: 'Stack is empty' });
           }
           continue;
         }
-        throw new Exceptions.SyntaxError();
+        throw new Exceptions.SyntaxError({ message: 'Reached end of processing' });
       }
     }
   });

@@ -4,7 +4,7 @@ define([
 ], function (declare, lang) {
   /**
     * Represents a token
-    * @class prakalpa.token
+    * @class prakalpa.Token
     * @property {prakalpa.constants.tokens} type - Type of token
     * @property {Object} start - The position at which the token starts
     * @property {number} start.column - The column number in a line at which the token starts
