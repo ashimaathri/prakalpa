@@ -8,7 +8,15 @@ define([
 ], function (declare, lang, array, DFAState, Terminals, Exceptions) {
   var START_MARKER;
 
+  /**
+    * @class prakalpa.parser.DFA
+    */
   return declare([], {
+    /*
+     * @constructor 
+     * @param {string} type - NonTerminal constant that represents this DFA 
+     * @param {prakalpa.parser.nfa} nfa - The NFA from which the DFA must be constructed
+     */
     constructor: function (opts) {
       lang.mixin(this, opts);
 
