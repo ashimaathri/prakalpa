@@ -3,176 +3,151 @@
  */
 define([
   'prakalpa/constants/non_terminals',
-  'prakalpa/constants/tokens'
-], function (NonTerminals, Tokens) {
+  'prakalpa/constants/tokens',
+  'prakalpa/parser/dfa_state',
+  'prakalpa/parser/dfa'
+], function (NonTerminals, Tokens, DFAState, DFA) {
   return ({
-    'MSTART': {
+    'MSTART': DFA({
+      type: 'MSTART',
       states: [
-       {
+       DFAState({
          arcs: [
            { label: NonTerminals.RULE, arrow: 0 },
            { label: Tokens.NEWLINE, arrow: 0 },
            { label: Tokens.ENDMARKER, arrow: 1 }
-         ],
-         isAccepting: false,
-         next: {}
-       },
-       {
+         ]
+       }),
+       DFAState({
          arcs: [],
-         isAccepting: true,
-         next: {}
-       }
+         isAccepting: true
+       })
       ],
       firstSet: [Tokens.NEWLINE, Tokens.NAME]
-    },
-    'RULE': {
+    }),
+    'RULE': DFA({
+      type: 'RULE',
       states: [
-        {
+        DFAState({
           arcs: [
             { label: Tokens.NAME, arrow: 1 }
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [
             { label: Tokens.COLON, arrow: 2 }
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [
             { label: NonTerminals.RHS, arrow: 3 }
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [
             { label: Tokens.NEWLINE, arrow: 4 }
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [],
-          isAccepting: true,
-          next: {}
-        }
+          isAccepting: true
+        })
       ],
       firstSet: [Tokens.NAME]
-    },
-    'RHS': {
+    }),
+    'RHS': DFA({
+      type: 'RHS',
       states: [
-        {
+        DFAState({
           arcs: [
             { label: NonTerminals.ALT, arrow: 1}
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [
             { label: Tokens.VBAR, arrow: 0},
           ],
-          isAccepting: true,
-          next: {}
-        }
+          isAccepting: true
+        })
       ],
       firstSet: [Tokens.NAME, Tokens.STRING, Tokens.LPAR, Tokens.LSQB]
-    },
-    'ALT': {
+    }),
+    'ALT': DFA({
+      type: 'ALT',
       states: [
-        {
+        DFAState({
           arcs: [
             { label: NonTerminals.ITEM, arrow: 1 }
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [
             { label: NonTerminals.ITEM, arrow: 1 },
           ],
-          isAccepting: true,
-          next: {}
-        }
+          isAccepting: true
+        })
       ],
       firstSet: [Tokens.NAME, Tokens.STRING, Tokens.LPAR, Tokens.LSQB]
-    },
-    'ITEM': {
+    }),
+    'ITEM': DFA({
+      type: 'ITEM',
       states: [
-        {
+        DFAState({
           arcs: [
             { label: Tokens.LSQB, arrow: 1 },
             { label: NonTerminals.ATOM, arrow: 2 }
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [
             { label: NonTerminals.RHS, arrow: 3}
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [
             { label: Tokens.STAR, arrow: 4 },
             { label: Tokens.PLUS, arrow: 4 }
           ],
-          isAccepting: true,
-          next: {}
-        },
-        {
+          isAccepting: true
+        }),
+        DFAState({
           arcs: [
             { label: Tokens.RSQB, arrow: 4 }
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [],
-          isAccepting: true,
-          next: {}
-        }
+          isAccepting: true
+        })
       ],
       firstSet: [Tokens.NAME, Tokens.STRING, Tokens.LPAR, Tokens.LSQB]
-    },
-    'ATOM': {
+    }),
+    'ATOM': DFA({
+      type: 'ATOM',
       states: [
-        {
+        DFAState({
           arcs: [
             { label: Tokens.NAME, arrow: 1 },
             { label: Tokens.STRING, arrow: 1 },
             { label: Tokens.LPAR, arrow: 2 }
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [],
-          isAccepting: true,
-          next: {}
-        },
-        {
+          isAccepting: true
+        }),
+        DFAState({
           arcs: [
             { label: NonTerminals.RHS, arrow: 3 }
-          ],
-          isAccepting: false,
-          next: {}
-        },
-        {
+          ]
+        }),
+        DFAState({
           arcs: [
             { label: Tokens.RPAR, arrow: 1 }
-          ],
-          isAccepting: false,
-          next: {}
-        }
+          ]
+        })
       ],
       firstSet: [Tokens.NAME, Tokens.STRING, Tokens.LPAR]
-    },
+    }),
   });
 });

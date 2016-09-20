@@ -14,33 +14,49 @@ define([
     * @param {Object} opts
     * @param {String} opts.type - NonTerminal constant that represents this DFA 
     * @param {prakalpa.parser.NFA} opts.nfa - The NFA from which the DFA must be constructed
+    * @param [Array<prakalpa.parser.DFAState>] opts.states - The DFA states of this DFA. This only needs to be supplied at parser generation time. Every other time, it is constructed programmatically.
+    * @param [Object.<String, Boolean>] opts.firstSet - A dict (used for fast membership checks) with all the labels of the firstSet as keys. The value doesn't matter. Only needs to be supplied at parser generation time. 
     */
   return declare([], /** @lends prakalpa.parser.DFA.prototype */{
     constructor: function (opts) {
       lang.mixin(this, opts);
 
+      /**
+        * States of the DFA. The first state at index 0 is always the start state.
+        * @name prakalpa.parser.DFA#states
+        * @type {Array<prakalpa.parser.DFAState>}
+        */
       this.states = [];
-      this.firstSet = null;
+      this._firstSet = null;
 
-      this.start = new DFAState();
-      this.start.addClosure(this.nfa.start);
-      if(this.nfa.start === this.nfa.end) {
-        this.start.setAsEndState();
+      if(opts.states && opts.firstSet) {
+        this.states = opts.states;
+        array.forEach(this.states, function(state) {
+          state.fixReferences(this.states);
+        }.bind(this));
+        this._firstSet = opts.firstSet;
+      } else {
+        this._start = new DFAState();
+        this._start.addClosure(this.nfa.start);
+        if(this.nfa.start === this.nfa.end) {
+          this._start.setAsEndState();
+        }
+        this.states.push(this._start);
+
+        this._generateDFA(this._start);
       }
-      this.states.push(this.start);
-
-      this._generateDFA(this.start);
     },
 
     /**
       * Generates DFAs recursively, starting at the start state that has already been constructed in the constructor, and visiting the nfa nodes reachable from all the states in the start state
+      * Based on 3.7.1 Conversion of an NFA to a DFA from the [Dragon Book 2nd Edition](http://www.informatik.uni-bremen.de/agbkb/lehre/ccfl/Material/ALSUdragonbook.pdf)
       * @private
       * @param {prakalpa.parser.DFAState} state - DFA state to start discovery from
       */
     _generateDFA: function (state) {
-      var arcs, label, dfaState;
+      var label, dfaState;
 
-      array.forEach(state.getNFAStates(), function (nfaState) {
+      array.forEach(state.nfaStates, function (nfaState) {
         array.forEach(nfaState, function (arc) {
           if(arc.label !== Terminals.EMPTY) {
             state.updateArcDFAState(arc.label, arc.arrow);
@@ -48,11 +64,9 @@ define([
         });
       });
 
-      arcs = state.getArcs();
-
-      for(label in arcs) {
-        dfaState = arcs[label];
-        if(dfaState.containsNFAState(this.nfa.end)) {
+      for(label in state.arcs) {
+        dfaState = state.arcs[label];
+        if(this.nfa.end in dfaState.nfaStates) {
           dfaState.setAsEndState();
         }
         if(this._addState(dfaState)) {
@@ -84,9 +98,11 @@ define([
     },
 
     /**
-      * Calculates the firstSet of this DFA
+      * Calculates the firstSet of this DFA. From the Dragon Book:
+      * > We define `FIRST (a)` to be the set of terminals that appear as the first symbols of one or more strings of terminals generated from `a`
       * @param {Object.<String, prakalpa.parser.DFA>} dfaGrammar - A map containing all the DFAs for this grammar
       * @return {Object.<String, Boolean>} firstSet - A dict (used for fast membership checks) with all the labels of the firstSet as keys. The value doesn't matter. 
+      * @throws {prakalpa.Exceptions.LeftRecursion} If the grammar is left recursive.
       */
     calcFirstSet: function (dfaGrammar) {
       var visited, result, label;
@@ -94,15 +110,15 @@ define([
       visited = {};
       result = {};
 
-      if(this.firstSet === START_MARKER) {
-        throw new Exceptions.LeftRecursion(this.dfa.type);
+      if(this._firstSet === START_MARKER) {
+        throw new Exceptions.LeftRecursion(this.type);
       }
-      if (this.firstSet) {
-        return this.firstSet;
+      if (this._firstSet) {
+        return this._firstSet;
       }
-      this.firstSet = START_MARKER;
+      this._firstSet = START_MARKER;
 
-      for(label in this.start.arcs) {
+      for(label in this._start.arcs) {
         if(!(label in visited)) {
           visited[label] = true;
           if(label in dfaGrammar) {
@@ -113,8 +129,18 @@ define([
         }
       }
 
-      this.firstSet = result;
-      return this.firstSet;
+      this._firstSet = result;
+      return this._firstSet;
     },
+
+    /**
+      * Constructs the transition table for each state in this DFA
+      * @param {Object.<String, prakalpa.parser.DFA>} dfaGrammar - A map containing all the DFAs for this grammar
+      */
+    constructFollowSet: function (dfaGrammar) {
+      array.forEach(this.states, function (state) {
+        state.constructFollowSet(dfaGrammar);
+      });
+    }
   });
 });

@@ -23,17 +23,18 @@ define([
   return declare([], /** @lends prakalpa.Tokenizer.prototype */{
     constructor: function (opts) {
       lang.mixin(this, opts);
-      this.atBeginningOfLine = true;
-      this.level = 0; // Parenthesis nesting level
-      this.indstack = [0];
-      this.indent = 0;
-      this.pending = 0;
-      this.charIndex = -1;
-      this.startOfToken = {};
-      this.contLine = false;
-      this.lineNum = 1;
-      this.colNum = -1;
-      this.lines = this.sourceText.split('\n');
+      this._atBeginningOfLine = true;
+      this._level = 0; // Parenthesis/Square Bracket/Braces nesting level
+      this._indstack = [0];
+      this._indent = 0;
+      this._pending = 0;
+      this._charIndex = -1;
+      this._startOfToken = {};
+      this._contLine = false;
+      this._lineNum = 1;
+      this._colNum = -1;
+      this._lines = this.sourceText.split('\n');
+      this._blankline = false;
     },
 
     /**
@@ -67,13 +68,13 @@ define([
       endLine = end.lineNum - 1;
 
       if(startLine === endLine) {
-        string = this.lines[startLine].substring(startColumn, endColumn);
+        string = this._lines[startLine].substring(startColumn, endColumn);
       } else {
-        string = this.lines[startLine].substring(startColumn);
+        string = this._lines[startLine].substring(startColumn);
         for(i = startLine + 1; i < endLine - 1; i++) {
-          string += this.lines[i] + '\n';
+          string += this._lines[i] + '\n';
         }
-        string += this.lines[i].substring(0, endColumn);
+        string += this._lines[i].substring(0, endColumn);
       }
       return string;
     },
@@ -85,14 +86,14 @@ define([
       * @returns {String} nextChar - Next character in the source text
       */
     _getNextChar: function () {
-      if(this.sourceText[this.charIndex] === '\n') {
-        this.lineNum++;
-        this.colNum = -1;
+      if(this.sourceText[this._charIndex] === '\n') {
+        this._lineNum++;
+        this._colNum = -1;
       }
-      this.charIndex++;
-      this.colNum++;
-      if(this.charIndex >= this.sourceText.length) { return; }
-      return this.sourceText[this.charIndex];
+      this._charIndex++;
+      this._colNum++;
+      if(this._charIndex >= this.sourceText.length) { return; }
+      return this.sourceText[this._charIndex];
     },
 
     /**
@@ -100,11 +101,11 @@ define([
       * @private
       */
     _backupOneChar: function () {
-      if(this.charIndex === -1) { return; }
-      this.charIndex--;
-      this.colNum--;
-      if(this.sourceText[this.charIndex] === '\n') {
-        this.lineNum--;
+      if(this._charIndex === -1) { return; }
+      this._charIndex--;
+      this._colNum--;
+      if(this.sourceText[this._charIndex] === '\n') {
+        this._lineNum--;
       }
     },
 
@@ -114,28 +115,28 @@ define([
       * @private
       */
     _nextline: function () {
-      this.startOfToken = { column: 0, lineNum: this.lineNum };
-      this.blankline = false;
+      this._startOfToken = { column: 0, lineNum: this._lineNum };
+      this._blankline = false;
 
-      if(this.atBeginningOfLine) {
-        this.atBeginningOfLine = false;
+      if(this._atBeginningOfLine) {
+        this._atBeginningOfLine = false;
         this._countIndentsAndDedents();
       }
 
-      this.startOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+      this._startOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
 
-      if(this.pending !== 0) {
-        if(this.pending < 0) {
-          this.pending++;
+      if(this._pending !== 0) {
+        if(this._pending < 0) {
+          this._pending++;
           return Token({
             type: Tokens.DEDENT,
-            start: this.startOfToken
+            start: this._startOfToken
           });
         } else {
-          this.pending--;
+          this._pending--;
           return Token({
             type: Tokens.INDENT,
-            start: this.startOfToken
+            start: this._startOfToken
           }); 
         }
       }
@@ -194,18 +195,18 @@ define([
         throw new Exceptions.TokenizeError({
           message: Errors.TOKEN,
           type: Tokens.ERRORTOKEN,
-          lineNum: this.lineNum
+          lineNum: this._lineNum
         });
       }
 
       //TODO Add support for async
 
-      endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+      endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
       return Token({
         type: Tokens.NAME,
-        start: this.startOfToken,
+        start: this._startOfToken,
         end: endOfToken,
-        string: this._getString(this.startOfToken, endOfToken)
+        string: this._getString(this._startOfToken, endOfToken)
       });
     },
 
@@ -219,7 +220,7 @@ define([
       //TODO Add support for tabs and form feeds
       do { c = this._getNextChar(); } while (c === ' ');
 
-      this.startOfToken = { column: this.colNum, lineNum: this.lineNum };
+      this._startOfToken = { column: this._colNum, lineNum: this._lineNum };
 
       if(c === '#') {
         while (c && c !== '\n') { c = this._getNextChar(); }
@@ -228,7 +229,7 @@ define([
       if(!c) {
         return Token({
           type: Tokens.ENDMARKER,
-          start: this.startOfToken
+          start: this._startOfToken
         });
       }
 
@@ -237,15 +238,15 @@ define([
       }
 
       if(c === '\n') {
-        this.atBeginningOfLine = true;
-        if(this.blankline || this.level > 0) { return this._nextline(); }
-        this.contLine = false;
-        endOfToken = { column: this.colNum, lineNum: this.lineNum };
+        this._atBeginningOfLine = true;
+        if(this._blankline || this._level > 0) { return this._nextline(); }
+        this._contLine = false;
+        endOfToken = { column: this._colNum, lineNum: this._lineNum };
         return Token({
           type: Tokens.NEWLINE,
-          start: this.startOfToken,
+          start: this._startOfToken,
           end: endOfToken,
-          string: this._getString(this.startOfToken, endOfToken)
+          string: this._getString(this._startOfToken, endOfToken)
         });
       }
 
@@ -267,12 +268,12 @@ define([
         } else if(c === '.') {
           c = this._getNextChar();
           if(c === '.') {
-            endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+            endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
             return Token({
               type: Tokens.ELLIPSIS,
-              start: this.startOfToken,
+              start: this._startOfToken,
               end: endOfToken,
-              string: this._getString(this.startOfToken, endOfToken)
+              string: this._getString(this._startOfToken, endOfToken)
             });
           } else {
             this._backupOneChar();
@@ -281,12 +282,12 @@ define([
         } else {
           this._backupOneChar();
         }
-        endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+        endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
         return Token({
           type: Tokens.DOT,
-          start: this.startOfToken,
+          start: this._startOfToken,
           end: endOfToken,
-          string: this._getString(this.startOfToken, endOfToken)
+          string: this._getString(this._startOfToken, endOfToken)
         });
       }
 
@@ -317,7 +318,7 @@ define([
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this.lineNum
+                lineNum: this._lineNum
               });
             }
             do {
@@ -331,7 +332,7 @@ define([
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this.lineNum
+                lineNum: this._lineNum
               });
             }
             do {
@@ -344,7 +345,7 @@ define([
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this.lineNum
+                lineNum: this._lineNum
               });
             }
             do {
@@ -370,7 +371,7 @@ define([
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this.lineNum
+                lineNum: this._lineNum
               });
             }
           }
@@ -392,12 +393,12 @@ define([
           }
         }
         this._backupOneChar();
-        endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+        endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
         return Token({
           type: Tokens.NUMBER,
-          start: this.startOfToken,
+          start: this._startOfToken,
           end: endOfToken,
-          string: this._getString(this.startOfToken, endOfToken)
+          string: this._getString(this._startOfToken, endOfToken)
         });
       }
       return this._letterQuote(c);
@@ -423,12 +424,12 @@ define([
       }
 
       this._backupOneChar();
-      endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+      endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
       return Token({
         type: Tokens.NUMBER,
-        start: this.startOfToken,
+        start: this._startOfToken,
         end: endOfToken,
-        string: this._getString(this.startOfToken, endOfToken)
+        string: this._getString(this._startOfToken, endOfToken)
       });
     },
 
@@ -447,18 +448,18 @@ define([
           throw new Exceptions.TokenizeError({
             message: Errors.TOKEN,
             type: Tokens.ERRORTOKEN,
-            lineNum: this.lineNum
+            lineNum: this._lineNum
           });
         }
       } else if(!this._isDigit(c)) {
         this._backupOneChar();
         this._backupOneChar();
-        endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+        endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
         return Token({
           type: Tokens.NUMBER,
-          start: this.startOfToken,
+          start: this._startOfToken,
           end: endOfToken,
-          string: this._getString(this.startOfToken, endOfToken)
+          string: this._getString(this._startOfToken, endOfToken)
         });
       }
       do {
@@ -470,12 +471,12 @@ define([
       }
 
       this._backupOneChar();
-      endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+      endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
       return Token({
         type: Tokens.NUMBER,
-        start: this.startOfToken,
+        start: this._startOfToken,
         end: endOfToken,
-        string: this._getString(this.startOfToken, endOfToken)
+        string: this._getString(this._startOfToken, endOfToken)
       });
     },
 
@@ -486,13 +487,13 @@ define([
     _imaginary: function () {
       var endOfToken;
 
-      endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+      endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
 
       return Token({
         type: Tokens.NUMBER,
-        start: this.startOfToken,
+        start: this._startOfToken,
         end: endOfToken,
-        string: this._getString(this.startOfToken, endOfToken)
+        string: this._getString(this._startOfToken, endOfToken)
       });
     },
 
@@ -531,13 +532,13 @@ define([
               throw new Exceptions.TokenizeError({
                 message: Errors.EOFS,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this.lineNum
+                lineNum: this._lineNum
               });
             } else {
               throw new Exceptions.TokenizeError({
                 message: Errors.EOLS,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this.lineNum
+                lineNum: this._lineNum
               });
             }
           }
@@ -545,7 +546,7 @@ define([
             throw new Exceptions.TokenizeError({
               message: Errors.EOLS,
               type: Tokens.ERRORTOKEN,
-              lineNum: this.lineNum
+              lineNum: this._lineNum
             });
           }
           if(c === quote) {
@@ -558,12 +559,12 @@ define([
           }
         }
 
-        endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+        endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
         return Token({
           type: Tokens.STRING,
-          start: this.startOfToken,
+          start: this._startOfToken,
           end: endOfToken,
-          string: this._getString(this.startOfToken, endOfToken)
+          string: this._getString(this._startOfToken, endOfToken)
         });
       }
 
@@ -582,10 +583,10 @@ define([
           throw new Exceptions.TokenizeError({
             message: Errors.LINECONT,
             type: Tokens.ERRORTOKEN,
-            lineNum: this.lineNum
+            lineNum: this._lineNum
           });
         }
-        this.contLine = true;
+        this._contLine = true;
         return this._again();
       }
 
@@ -609,12 +610,12 @@ define([
         } else {
           this._backupOneChar();
         }
-        endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+        endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
         return Token({
           type: token,
-          start: this.startOfToken,
+          start: this._startOfToken,
           end: endOfToken,
-          string: this._getString(this.startOfToken, endOfToken)
+          string: this._getString(this._startOfToken, endOfToken)
         });
       }
       this._backupOneChar();
@@ -631,12 +632,12 @@ define([
         case '(':
         case '[':
         case '{':
-          this.level++;
+          this._level++;
           break;
         case ')':
         case ']':
         case '}':
-          this.level--;
+          this._level--;
           break;
       }
 
@@ -650,13 +651,13 @@ define([
     _oneCharacter: function (c) {
       var endOfToken;
 
-      endOfToken = { column: this.colNum + 1, lineNum: this.lineNum };
+      endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
 
       return Token({
         type: this.oneCharToken(c),
-        start: this.startOfToken,
+        start: this._startOfToken,
         end: endOfToken,
-        string: this._getString(this.startOfToken, endOfToken)
+        string: this._getString(this._startOfToken, endOfToken)
       });
     },
 
@@ -728,33 +729,33 @@ define([
 
       // TODO Add support for interactive mode
       if(c === '\#' || c === '\n') {
-        this.blankline = true;
+        this._blankline = true;
       }
 
       // I think altcol, altindstack etc. are to check if tabs and spaces
       // are being used inconsistently in indentation.
       // As we don't support tabs anyway, I'm skipping that part of the code
-      if(!this.blankline && this.level === 0) {
-        if(col > this.indstack[this.indent]) {
-          if(this.indent + 1 >= MAXINDENT) {
+      if(!this._blankline && this._level === 0) {
+        if(col > this._indstack[this._indent]) {
+          if(this._indent + 1 >= MAXINDENT) {
             throw new Exceptions.TokenizeError({
               message: Errors.TOODEEP,
               type: Tokens.ERRORTOKEN,
-              lineNum: this.lineNum
+              lineNum: this._lineNum
             });
           }
-          this.pending++;
-          this.indstack[++this.indent] = col;
-        } else if (col < this.indstack[this.indent]) {
-          while(this.indent > 0 && col < this.indstack[this.indent]) {
-            this.pending--;
-            this.indent--;
+          this._pending++;
+          this._indstack[++this._indent] = col;
+        } else if (col < this._indstack[this._indent]) {
+          while(this._indent > 0 && col < this._indstack[this._indent]) {
+            this._pending--;
+            this._indent--;
           }
-          if(col !== this.indstack[this.indent]) {
+          if(col !== this._indstack[this._indent]) {
             throw new Exceptions.TokenizeError({
               message: Errors.DEDENT,
               type: Tokens.ERRORTOKEN,
-              lineNum: this.lineNum
+              lineNum: this._lineNum
             });
           }
         }
