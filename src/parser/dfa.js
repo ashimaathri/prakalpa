@@ -66,7 +66,7 @@ define([
 
       for(label in state.arcs) {
         dfaState = state.arcs[label];
-        if(this.nfa.end in dfaState.nfaStates) {
+        if(dfaState.containsNFAState(this.nfa.end )) {
           dfaState.setAsEndState();
         }
         if(this._addState(dfaState)) {

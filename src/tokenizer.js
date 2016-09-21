@@ -8,8 +8,9 @@ define([
   'prakalpa/constants/tokens',
   'prakalpa/constants/errors',
   'prakalpa/exceptions',
-  'prakalpa/token'
-], function (declare, lang, Tokens, Errors, Exceptions, Token) {
+  'prakalpa/token',
+  'prakalpa/utils'
+], function (declare, lang, Tokens, Errors, Exceptions, Token, Utils) {
   var MAXINDENT;
 
   MAXINDENT = 100;
@@ -601,10 +602,10 @@ define([
       var c2, c3, token, token3, endOfToken;
 
       c2 = this._getNextChar();
-      token = this.twoCharToken(c, c2);
+      token = Utils.twoCharToken(c, c2);
       if(token !== Tokens.OP) {
         c3 = this._getNextChar();
-        token3 = this.threeCharToken(c, c2, c3);
+        token3 = Utils.threeCharToken(c, c2, c3);
         if(token3 !== Tokens.OP) {
           token = token3;
         } else {
@@ -654,7 +655,7 @@ define([
       endOfToken = { column: this._colNum + 1, lineNum: this._lineNum };
 
       return Token({
-        type: this.oneCharToken(c),
+        type: Utils.oneCharToken(c),
         start: this._startOfToken,
         end: endOfToken,
         string: this._getString(this._startOfToken, endOfToken)
@@ -786,189 +787,6 @@ define([
       return (this._isDigit(c) || 
              (charCode >= 65 && charCode <= 70) || // A to F
              (charCode >= 97 && charCode <= 102)); // a to f
-    },
-
-    /**
-      * Returns token corresponding to one character string
-      * @public
-      * @param {string} c - One character string
-      * @returns {prakalpa.constants.Tokens}
-      */
-    oneCharToken: function (c) {
-      switch (c) {
-        case '(':           return Tokens.LPAR;
-        case ')':           return Tokens.RPAR;
-        case '[':           return Tokens.LSQB;
-        case ']':           return Tokens.RSQB;
-        case ':':           return Tokens.COLON;
-        case ',':           return Tokens.COMMA;
-        case ';':           return Tokens.SEMI;
-        case '+':           return Tokens.PLUS;
-        case '-':           return Tokens.MINUS;
-        case '*':           return Tokens.STAR;
-        case '/':           return Tokens.SLASH;
-        case '|':           return Tokens.VBAR;
-        case '&':           return Tokens.AMPER;
-        case '<':           return Tokens.LESS;
-        case '>':           return Tokens.GREATER;
-        case '=':           return Tokens.EQUAL;
-        case '.':           return Tokens.DOT;
-        case '%':           return Tokens.PERCENT;
-        case '{':           return Tokens.LBRACE;
-        case '}':           return Tokens.RBRACE;
-        case '^':           return Tokens.CIRCUMFLEX;
-        case '~':           return Tokens.TILDE;
-        case '@':           return Tokens.AT;
-        default:            return Tokens.OP;
-      }
-    },
-
-    /**
-      * Returns token corresponding to two character string
-      * @public
-      * @param {string} c1 - First character
-      * @param {string} c2 - Second character
-      * @returns {prakalpa.constants.Tokens}
-      */
-    twoCharToken: function (c1, c2) {
-      switch (c1) {
-        case '=':
-          switch (c2) {
-            case '=': return Tokens.EQEQUAL;
-          }
-          break;
-        case '!':
-          switch (c2) {
-            case '=': return Tokens.NOTEQUAL;
-          }
-          break;
-        case '<':
-          switch (c2) {
-            case '>': return Tokens.NOTEQUAL;
-            case '=': return Tokens.LESSEQUAL;
-            case '<': return Tokens.LEFTSHIFT;
-          }
-          break;
-        case '>':
-          switch (c2) {
-            case '=': return Tokens.GREATEREQUAL;
-            case '>': return Tokens.RIGHTSHIFT;
-          }
-          break;
-        case '+':
-          switch (c2) {
-            case '=': return Tokens.PLUSEQUAL;
-          }
-          break;
-        case '-':
-          switch (c2) {
-            case '=': return Tokens.MINEQUAL;
-            case '>': return Tokens.RARROW;
-          }
-          break;
-        case '*':
-          switch (c2) {
-            case '*': return Tokens.DOUBLESTAR;
-            case '=': return Tokens.STAREQUAL;
-          }
-          break;
-        case '/':
-          switch (c2) {
-            case '/': return Tokens.DOUBLESLASH;
-            case '=': return Tokens.SLASHEQUAL;
-          }
-          break;
-        case '|':
-          switch (c2) {
-            case '=': return Tokens.VBAREQUAL;
-          }
-          break;
-        case '%':
-          switch (c2) {
-            case '=': return Tokens.PERCENTEQUAL;
-          }
-          break;
-        case '&':
-          switch (c2) {
-            case '=': return Tokens.AMPEREQUAL;
-          }
-          break;
-        case '^':
-          switch (c2) {
-            case '=': return Tokens.CIRCUMFLEXEQUAL;
-          }
-          break;
-        case '@':
-          switch (c2) {
-            case '=': return Tokens.ATEQUAL;
-          }
-          break;
-      }
-      return Tokens.OP;
-    },
-
-    /**
-      * Returns token corresponding to three character string
-      * @public
-      * @param {string} c1 - First character
-      * @param {string} c2 - Second character
-      * @param {string} c3 - Third character
-      * @returns {prakalpa.constants.Tokens}
-      */
-    threeCharToken: function (c1, c2, c3) {
-      switch (c1) {
-        case '<':
-          switch (c2) {
-            case '<':
-              switch (c3) {
-                case '=':
-                  return Tokens.LEFTSHIFTEQUAL;
-              }
-              break;
-          }
-          break;
-        case '>':
-          switch (c2) {
-            case '>':
-              switch (c3) {
-                case '=':
-                  return Tokens.RIGHTSHIFTEQUAL;
-              }
-              break;
-          }
-          break;
-        case '*':
-          switch (c2) {
-            case '*':
-              switch (c3) {
-                case '=':
-                  return Tokens.DOUBLESTAREQUAL;
-              }
-              break;
-          }
-          break;
-        case '/':
-          switch (c2) {
-            case '/':
-              switch (c3) {
-                case '=':
-                  return Tokens.DOUBLESLASHEQUAL;
-              }
-              break;
-          }
-          break;
-        case '.':
-          switch (c2) {
-            case '.':
-              switch (c3) {
-                case '.':
-                  return Tokens.ELLIPSIS;
-              }
-              break;
-          }
-          break;
-      }
-      return Tokens.OP;
     }
   });
 });

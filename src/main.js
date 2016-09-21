@@ -73,9 +73,8 @@ define([
       var pgen;
 
       pgen = new ParserGenerator({ parseTreeRoot: parseTreeRoot });
-      window.nfaGrammar = pgen.nfaGrammar;
       window.labels = pgen.labels;
-      window.dfaGrammar = pgen.dfaGrammar;
+      window.dfas= pgen.dfas;
     }
   });
 });

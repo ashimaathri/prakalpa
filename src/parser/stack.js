@@ -1,12 +1,16 @@
 define([
   'dojo/_base/declare'
 ], function (declare) {
-  return declare([Array], {
+  /**
+    * @class prakalpa.parser.Stack
+    * @extends Array
+    */
+  return declare([Array], /** @lends prakalpa.parser.Stack.prototype */{
     /**
-     * dfa: dfa for a non terminal
-     * currentParseTreeNode: node that is going to be parent of the next child
-     * currentState: active state in dfa
-     */
+      * Get the value of the propertyName at the top of the stack if present, else return the top of the stack
+      * @param [String] propertyName
+      * @returns {Object} Value of property or object at the top of the stack
+      */
     peek: function (propertyName) {
       var topEntry;
 
@@ -19,10 +23,19 @@ define([
       }
     },
 
+    /**
+      * Checks if stack is empty
+      * @returns {Boolean}
+      */
     isEmpty: function () {
       return !this.length;
     },
 
+    /**
+      * Updates the the value of the property at the top of the stack
+      * @param {String} propertyName - Name of property you want to update
+      * @param {Object} newValue - New value of the property
+      */
     updateTop: function (propertyName, newValue) {
       var topEntry;
 

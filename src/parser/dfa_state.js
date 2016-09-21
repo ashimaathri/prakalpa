@@ -16,11 +16,11 @@ define([
   DFAState = declare([], /** @lends prakalpa.parser.DFAState.prototype */{
     constructor: function (opts) {
       /**
-        * Map(for fast lookups) that has NFA States as keys. The value doesn't matter.
+        * Array of NFA States
         * @name prakalpa.parser.DFAState#nfaStates
-        * @type {Object.<Array, Boolean>}
+        * @type {Array<Object>}
         */
-      this.nfaStates = {};
+      this.nfaStates = [];
       /**
         * Map that has labels(can be Terminals or NonTerminals) as keys and DFA States as values.
         * @name prakalpa.parser.DFAState#arcs
@@ -33,7 +33,39 @@ define([
         * @type {Object.<String, prakalpa.parser.DFAState>}
         */
       this.followSet = [];
-      this._isAccepting = (opts && opts.isAccepting) || false;
+      /**
+        * Indicates if this DFA state is an accepting state or not
+        * @name prakalpa.parser.DFAState#isAccepting
+        * @type {Boolean}
+        */
+      this.isAccepting = (opts && opts.isAccepting) || false;
+    },
+
+    /**
+      * Checks if nfaState is absent from list
+      * @private
+      * @param {Object} nfaState
+      * @returns {Boolean}
+      */
+    _nfaStateAbsent: function (nfaState) {
+      return (this.nfaStates.indexOf(nfaState) === -1);
+    },
+
+    /**
+      * Checks if nfaState is present in the list
+      * @param {Object} nfaState
+      * @returns {Boolean}
+      */
+    containsNFAState: function (nfaState) {
+      return (this.nfaStates.indexOf(nfaState) !== -1);
+    },
+
+    /**
+      * Adds nfaState to the list
+      * @param {Object} nfaState
+      */
+		addNFAState: function (nfaState) {
+      this.nfaStates.push(nfaState);
     },
 
     /**
@@ -50,7 +82,7 @@ define([
       * Mark this DFA state as an end/final/accepting state
       */
     setAsEndState: function () {
-      this._isAccepting = true;
+      this.isAccepting = true;
     },
 
     /**
@@ -58,8 +90,8 @@ define([
       * @param {Array} nfaState - An array of arcs
       */
     addClosure: function (nfaState) {
-      if(!(nfaState in this.nfaStates)) {
-        this.nfaStates[nfaState] = true;
+      if(this._nfaStateAbsent(nfaState)) {
+				this.addNFAState(nfaState);
         array.forEach(nfaState, function (arc) {
           if(arc.label === Terminals.EMPTY) {
             this.addClosure(arc.arrow);
@@ -87,15 +119,15 @@ define([
       * @returns {Boolean} `true` if equal, else `false`
       */
     equals: function (other) {
-      var nfaState;
+      var i;
 
-      if(Object.keys(this.nfaStates).length !== Object.keys(other.nfaStates).length) {
+      if(this.nfaStates.length !== other.nfaStates.length) {
         return false;
       }
   
-      for(nfaState in this.nfaStates) {
-        if(!(nfaState in other.nfaStates)) {
-          return false;
+			for(i = 0; i < this.nfaStates.length; i++) {
+				if(this.nfaStates[i] !== other.nfaStates[i]) {
+					return false;
         }
       }
 

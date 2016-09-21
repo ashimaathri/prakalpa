@@ -7,6 +7,13 @@ define([
   'prakalpa/parser/dfa_state',
   'prakalpa/parser/dfa'
 ], function (NonTerminals, Tokens, DFAState, DFA) {
+  /**
+    * DFAs of a Meta Grammar that defines a language that accepts the Python's grammar
+    * The meta grammar is hand-written and will be used to generate the DFAs of the actual Python grammar
+    * It consists of 6 DFAs - `MSTART`, `RULE`, `RHS`, `ALT`, `ITEM`, `ATOM`
+    * See the [references section](https://github.com/ashimaathri/prakalpa/tree/master/references/Python_metagrammar.pdf) on github for the state diagrams
+    * @module prakalpa.parser.MetaGrammar
+    */
   return ({
     'MSTART': DFA({
       type: 'MSTART',
