@@ -196,7 +196,7 @@ define([
         throw new Exceptions.TokenizeError({
           message: Errors.TOKEN,
           type: Tokens.ERRORTOKEN,
-          lineNum: this._lineNum
+          start: this._startOfToken
         });
       }
 
@@ -319,7 +319,7 @@ define([
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this._lineNum
+                start: this._startOfToken
               });
             }
             do {
@@ -333,7 +333,7 @@ define([
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this._lineNum
+                start: this._startOfToken
               });
             }
             do {
@@ -346,7 +346,7 @@ define([
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this._lineNum
+                start: this._startOfToken
               });
             }
             do {
@@ -372,7 +372,7 @@ define([
               throw new Exceptions.TokenizeError({
                 message: Errors.TOKEN,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this._lineNum
+                start: this._startOfToken
               });
             }
           }
@@ -449,7 +449,7 @@ define([
           throw new Exceptions.TokenizeError({
             message: Errors.TOKEN,
             type: Tokens.ERRORTOKEN,
-            lineNum: this._lineNum
+            start: this._startOfToken
           });
         }
       } else if(!this._isDigit(c)) {
@@ -533,13 +533,13 @@ define([
               throw new Exceptions.TokenizeError({
                 message: Errors.EOFS,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this._lineNum
+                start: this._startOfToken
               });
             } else {
               throw new Exceptions.TokenizeError({
                 message: Errors.EOLS,
                 type: Tokens.ERRORTOKEN,
-                lineNum: this._lineNum
+                start: this._startOfToken
               });
             }
           }
@@ -547,7 +547,7 @@ define([
             throw new Exceptions.TokenizeError({
               message: Errors.EOLS,
               type: Tokens.ERRORTOKEN,
-              lineNum: this._lineNum
+              start: this._startOfToken
             });
           }
           if(c === quote) {
@@ -584,7 +584,7 @@ define([
           throw new Exceptions.TokenizeError({
             message: Errors.LINECONT,
             type: Tokens.ERRORTOKEN,
-            lineNum: this._lineNum
+            start: this._startOfToken
           });
         }
         this._contLine = true;
@@ -742,7 +742,7 @@ define([
             throw new Exceptions.TokenizeError({
               message: Errors.TOODEEP,
               type: Tokens.ERRORTOKEN,
-              lineNum: this._lineNum
+              start: this._startOfToken
             });
           }
           this._pending++;
@@ -756,7 +756,7 @@ define([
             throw new Exceptions.TokenizeError({
               message: Errors.DEDENT,
               type: Tokens.ERRORTOKEN,
-              lineNum: this._lineNum
+              start: this._startOfToken
             });
           }
         }
