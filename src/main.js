@@ -1,10 +1,19 @@
+/**
+  * @namespace prakalpa
+  */
 define([
   'dojo/_base/declare',
   'dojo/_base/lang',
   'dojo/query',
-  './tokenizer',
+  'prakalpa/tokenizer',
+  'prakalpa/parser/meta_grammar',
+  'prakalpa/parser/main',
+  'prakalpa/parser/pgen',
+  'prakalpa/constants/non_terminals',
+  'dojo/request/xhr',
   'dojo/NodeList-manipulate'
-], function (declare, lang, query, Tokenizer) {
+], function (declare, lang, query, Tokenizer, metagrammarDFAs, Parser,
+             ParserGenerator, NonTerminals, xhr) {
   return declare([], {
     constructor: function (opts) {
       lang.mixin(this, opts);
@@ -17,7 +26,11 @@ define([
     },
 
     getNextToken: function () {
-      this.appendObjectToTextBox(this.tokenizer.getNext());
+      try {
+        this.appendObjectToTextBox(this.tokenizer.getNext());
+      } catch(e) {
+        this.appendObjectToTextBox(e);
+      }
     },
 
     appendObjectToTextBox: function (tokenInfo) {
@@ -34,9 +47,34 @@ define([
       var tokenInfo;
 
       do {
-        tokenInfo = this.tokenizer.getNext();
-        this.appendObjectToTextBox(tokenInfo);
-      } while(tokenInfo.token !== 'ENDMARKER');
+        try {
+          tokenInfo = this.tokenizer.getNext();
+          this.appendObjectToTextBox(tokenInfo);
+        } catch (e) {
+          this.appendObjectToTextBox(e);
+          break;
+        }
+      } while(tokenInfo.type !== 'ENDMARKER');
+    },
+
+    construct_parse_tree: function (pathToGrammarFile, callback) {
+      xhr(pathToGrammarFile)
+        .then(function (pythonGrammar) {
+          callback(
+            new Parser({
+              grammar: metagrammarDFAs,
+              start: NonTerminals.MSTART,
+              sourceText: pythonGrammar
+            }).parse());
+        });
+    },
+
+    constructPgen: function (parseTreeRoot) {
+      var pgen;
+
+      pgen = new ParserGenerator({ parseTreeRoot: parseTreeRoot });
+      window.labels = pgen.labels;
+      window.dfas= pgen.dfas;
     }
   });
 });

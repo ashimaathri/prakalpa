@@ -1,5 +1,6 @@
 define([], function () {
   return {
+    EMPTY:            'EMPTY',
     ENDMARKER:        'ENDMARKER',
     NAME:             'NAME',
     NUMBER:           'NUMBER',

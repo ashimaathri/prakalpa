@@ -14,7 +14,8 @@ module.exports = function(grunt) {
         latedef: true,
         nonbsp: true,
         dojo: true,
-        predef: ['module']
+        predef: ['module'],
+        loopfunc: true
       },
       all: [
         'Gruntfile.js',
@@ -35,12 +36,24 @@ module.exports = function(grunt) {
           reporters: ['Console', { id: 'LcovHtml', directory: 'html-report' }]
         }
       }
+    },
+    jsdoc: {
+      dist: {
+        src: ['src/**/*.js'],
+        options: {
+          destination: 'doc',
+          template: 'node_modules/ink-docstrap/template',
+          configure: 'jsdoc.conf.json',
+          private: true
+        }
+      }
     }
   });
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('intern');
+  grunt.loadNpmTasks('grunt-jsdoc');
   
   grunt.registerTask('test', ['jshint', 'intern:prod']);
   grunt.registerTask('test-local', ['jshint', 'intern:dev']);
-  grunt.registerTask('default', ['test']);
+  grunt.registerTask('default', ['test', 'jsdoc']);
 };

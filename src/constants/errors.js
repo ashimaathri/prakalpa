@@ -5,7 +5,6 @@ define([], function () {
     INTR:		    'Interrupted',
     TOKEN:		  'Bad token',
     SYNTAX:	    'Syntax error',
-    NOMEM:		  'Ran out of memory',
     DONE:		    'Parsing complete',
     ERROR:		  'Execution error',
     TABSPACE:	  'Inconsistent mixing of tabs and spaces',

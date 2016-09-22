@@ -24,75 +24,82 @@ define([
       }
     });
 
-    assert.strictEqual(tokenizer.getNext().token, 'ENDMARKER');
+    assert.strictEqual(tokenizer.getNext().type, 'ENDMARKER');
   };
 
-  assertError = function (sourceText, errorString) {
+  assertError = function (sourceText, expectedExceptionInfo) {
     var tokenizer, tokenInfo;
 
     tokenizer = new Tokenizer({ sourceText: sourceText });
 
     do {
-      tokenInfo = tokenizer.getNext();
-    } while(tokenInfo.token !== 'ERRORTOKEN' && tokenInfo.token !== 'ENDMARKER'); 
-
-    assert.strictEqual(tokenInfo.token, 'ERRORTOKEN');
-    assert.strictEqual(tokenInfo.error, errorString);
+      try {
+        tokenInfo = tokenizer.getNext();
+      } catch(e) {
+        for(var key in expectedExceptionInfo) {
+          assert.deepEqual(expectedExceptionInfo[key], e[key]);
+        }
+      }
+    } while(tokenInfo.type !== 'ENDMARKER'); 
   };
 
   registerSuite({
-    name: 'Tokenzier',
+    name: 'Tokenizer',
 
     'Hello world!': function () {
       assertTokensEqual('Hello world!', [
-        { token: 'NAME', start: [0, 1], end: [5, 1] },
-        { token: 'NAME', start: [6, 1], end: [11, 1] },
-        { token: 'OP', start: [11, 1], end: [12, 1] }
+        { type: 'NAME', start: { column: 0, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+        { type: 'NAME', start: { column: 6, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+        { type: 'OP', start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }}
       ]);
     },
 
     '1 + 1': function () {
       assertTokensEqual('1 + 1', [
-        { token: 'NUMBER', start: [0, 1], end: [1, 1] },
-        { token: 'PLUS', start: [2, 1], end: [3, 1] },
-        { token: 'NUMBER', start: [4, 1], end: [5, 1] }
+        { type: 'NUMBER', start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+        { type: 'PLUS', start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+        { type: 'NUMBER', start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }}
       ]);
     },
 
     'if False:\n    # NL\n    True = False # NEWLINE\n': function () {
       assertTokensEqual('if False:\n    # NL\n    True = False # NEWLINE\n', [
-        { token: 'NAME', start: [0, 1], end: [2, 1] },
-        { token: 'NAME', start: [3, 1], end: [8, 1] },
-        { token: 'COLON', start: [8, 1], end: [9, 1] },
-        { token: 'NEWLINE', start: [9, 1], end: [9, 1] },
-        { token: 'INDENT', lineNum: 3},
-        { token: 'NAME', start: [4, 3], end: [8, 3] },
-        { token: 'EQUAL', start: [9, 3], end: [10, 3] },
-        { token: 'NAME', start: [11, 3], end: [16, 3] },
-        { token: 'NEWLINE', start: [17, 3], end: [26, 3] },
-        { token: 'DEDENT', lineNum: 3},
+        { type: 'NAME', start: { column: 0, lineNum: 1 }, end: { column: 2, lineNum: 1 }},
+        { type: 'NAME', start: { column: 3, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
+        { type: 'COLON', start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+        { type: 'NEWLINE', start: { column: 9, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+        { type: 'INDENT', start: { column: 4, lineNum: 3 }},
+        { type: 'NAME', start: { column: 4, lineNum: 3 }, end: { column: 8, lineNum: 3 }},
+        { type: 'EQUAL', start: { column: 9, lineNum: 3 }, end: { column: 10, lineNum: 3 }},
+        { type: 'NAME', start: { column: 11, lineNum: 3 }, end: { column: 16, lineNum: 3 }},
+        { type: 'NEWLINE', start: { column: 17, lineNum: 3 }, end: { column: 26, lineNum: 3 }},
+        { type: 'DEDENT', start: { column: 0, lineNum: 3 }},
       ]);
     },
 
     'indent error': function () {
-      assertError('def k(x):\n    x += 2\n  x += 5\n', 'No matching outer block for dedent');
+      assertError('def k(x):\n    x += 2\n  x += 5\n', {
+        message: 'No matching outer block for dedent',
+        type: 'ERRORTOKEN',
+        start: { column: 0, lineNum: 3 }
+      });
     },
 
     'if x == 1:\n    print(x)\n': function () {
       assertTokensEqual('if x == 1:\n    print(x)\n', [
-        { token: 'NAME', start: [0, 1], end: [2, 1] },
-        { token: 'NAME', start: [3, 1], end: [4, 1] },
-        { token: 'EQEQUAL', start: [5, 1], end: [7, 1] },
-        { token: 'NUMBER', start: [8, 1], end: [9, 1] },
-        { token: 'COLON', start: [9, 1], end: [10, 1] },
-        { token: 'NEWLINE', start: [10, 1], end: [10, 1] },
-        { token: 'INDENT', lineNum: 2}, 
-        { token: 'NAME', start: [4, 2], end: [9, 2] },
-        { token: 'LPAR', start: [9, 2], end: [10, 2] },
-        { token: 'NAME', start: [10, 2], end: [11, 2] },
-        { token: 'RPAR', start: [11, 2], end: [12, 2] },
-        { token: 'NEWLINE', start: [12, 2], end: [12, 2] },
-        { token: 'DEDENT', lineNum: 2}
+        { type: 'NAME', start: { column: 0, lineNum: 1 }, end: { column: 2, lineNum: 1 }},
+        { type: 'NAME', start: { column: 3, lineNum: 1 }, end: { column: 4, lineNum: 1 }},
+        { type: 'EQEQUAL', start: { column: 5, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+        { type: 'NUMBER', start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+        { type: 'COLON', start: { column: 9, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+        { type: 'NEWLINE', start: { column: 10, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+        { type: 'INDENT', start: { column: 4, lineNum: 2 }}, 
+        { type: 'NAME', start: { column: 4, lineNum: 2 }, end: { column: 9, lineNum: 2 }},
+        { type: 'LPAR', start: { column: 9, lineNum: 2 }, end: { column: 10, lineNum: 2 }},
+        { type: 'NAME', start: { column: 10, lineNum: 2 }, end: { column: 11, lineNum: 2 }},
+        { type: 'RPAR', start: { column: 11, lineNum: 2 }, end: { column: 12, lineNum: 2 }},
+        { type: 'NEWLINE', start: { column: 12, lineNum: 2 }, end: { column: 12, lineNum: 2 }},
+        { type: 'DEDENT', start: { column: 0, lineNum: 2 }}
       ]);
     },
 
@@ -102,180 +109,180 @@ define([
 
     'if x == 1 : \n  print(x)\n': function () {
       assertTokensEqual('if x == 1 : \n  print(x)\n', [
-        { token: 'NAME', start: [0, 1], end: [2, 1] },
-        { token: 'NAME', start: [3, 1], end: [4, 1] },
-        { token: 'EQEQUAL', start: [5, 1], end: [7, 1] },
-        { token: 'NUMBER', start: [8, 1], end: [9, 1] },
-        { token: 'COLON', start: [10, 1], end: [11, 1] },
-        { token: 'NEWLINE', start: [12, 1], end: [12, 1] },
-        { token: 'INDENT', lineNum: 2}, 
-        { token: 'NAME', start: [2, 2], end: [7, 2] },
-        { token: 'LPAR', start: [7, 2], end: [8, 2] },
-        { token: 'NAME', start: [8, 2], end: [9, 2] },
-        { token: 'RPAR', start: [9, 2], end: [10, 2] },
-        { token: 'NEWLINE', start: [10, 2], end: [10, 2] },
-        { token: 'DEDENT', lineNum: 2}
+        { type: 'NAME', start: { column: 0, lineNum: 1 }, end: { column: 2, lineNum: 1 }},
+        { type: 'NAME', start: { column: 3, lineNum: 1 }, end: { column: 4, lineNum: 1 }},
+        { type: 'EQEQUAL', start: { column: 5, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+        { type: 'NUMBER', start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+        { type: 'COLON', start: { column: 10, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+        { type: 'NEWLINE', start: { column: 12, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+        { type: 'INDENT', start: { column: 2, lineNum: 2 }}, 
+        { type: 'NAME', start: { column: 2, lineNum: 2 }, end: { column: 7, lineNum: 2 }},
+        { type: 'LPAR', start: { column: 7, lineNum: 2 }, end: { column: 8, lineNum: 2 }},
+        { type: 'NAME', start: { column: 8, lineNum: 2 }, end: { column: 9, lineNum: 2 }},
+        { type: 'RPAR', start: { column: 9, lineNum: 2 }, end: { column: 10, lineNum: 2 }},
+        { type: 'NEWLINE', start: { column: 10, lineNum: 2 }, end: { column: 10, lineNum: 2 }},
+        { type: 'DEDENT', start: { column: 0, lineNum: 2 }}
       ]);
     },
 
     'comments': function () {
       assertTokensEqual('# Comments\n"#"\n#\'\n#"\n#\\\n      #\n    # abc\n\'\'\'#\n#\'\'\'\n\nx = 1  #\n', [
-        {token: "STRING", start: [0, 2], end: [3, 2]},
-        {token: "NEWLINE", start: [3, 2], end: [3, 2]},
-        {token: "STRING", start: [0, 8], end: [4, 9]},
-        {token: "NEWLINE", start: [4, 9], end: [4, 9]},
-        {token: "NAME", start: [0, 11], end: [1, 11]},
-        {token: "EQUAL", start: [2, 11], end: [3, 11]},
-        {token: "NUMBER", start: [4, 11], end: [5, 11]},
-        {token: "NEWLINE", start: [7, 11], end: [8, 11]}
+        {type: "STRING", start: { column: 0, lineNum: 2 }, end: { column: 3, lineNum: 2 }},
+        {type: "NEWLINE", start: { column: 3, lineNum: 2 }, end: { column: 3, lineNum: 2 }},
+        {type: "STRING", start: { column: 0, lineNum: 8 }, end: { column: 4, lineNum: 9 }},
+        {type: "NEWLINE", start: { column: 4, lineNum: 9 }, end: { column: 4, lineNum: 9 }},
+        {type: "NAME", start: { column: 0, lineNum: 11 }, end: { column: 1, lineNum: 11 }},
+        {type: "EQUAL", start: { column: 2, lineNum: 11 }, end: { column: 3, lineNum: 11 }},
+        {type: "NUMBER", start: { column: 4, lineNum: 11 }, end: { column: 5, lineNum: 11 }},
+        {type: "NEWLINE", start: { column: 7, lineNum: 11 }, end: { column: 8, lineNum: 11 }}
       ]);
     },
 
     'balancing continuation': function () {
       assertTokensEqual("a = (3, 4,\n  5, 6)\ny = [3, 4,\n  5]\nz = {'a':5,\n  'b':6}\nx = (len(repr(y)) + 5*x - a[\n   3 ]\n   - x + len({\n   }\n    )\n  )", [
-            { token: "NAME", start: [0, 1], end: [1, 1] },
-            { token: "EQUAL", start: [2, 1], end: [3, 1] },
-            { token: "LPAR", start: [4, 1], end: [5, 1] },
-            { token: "NUMBER", start: [5, 1], end: [6, 1] },
-            { token: "COMMA", start: [6, 1], end: [7, 1] },
-            { token: "NUMBER", start: [8, 1], end: [9, 1] },
-            { token: "COMMA", start: [9, 1], end: [10, 1] },
-            { token: "NUMBER", start: [2, 2], end: [3, 2] },
-            { token: "COMMA", start: [3, 2], end: [4, 2] },
-            { token: "NUMBER", start: [5, 2], end: [6, 2] },
-            { token: "RPAR", start: [6, 2], end: [7, 2] },
-            { token: "NEWLINE", start: [7, 2], end: [7, 2] },
-            { token: "NAME", start: [0, 3], end: [1, 3] },
-            { token: "EQUAL", start: [2, 3], end: [3, 3] },
-            { token: "LSQB", start: [4, 3], end: [5, 3] },
-            { token: "NUMBER", start: [5, 3], end: [6, 3] },
-            { token: "COMMA", start: [6, 3], end: [7, 3] },
-            { token: "NUMBER", start: [8, 3], end: [9, 3] },
-            { token: "COMMA", start: [9, 3], end: [10, 3] },
-            { token: "NUMBER", start: [2, 4], end: [3, 4] },
-            { token: "RSQB", start: [3, 4], end: [4, 4] },
-            { token: "NEWLINE", start: [4, 4], end: [4, 4] },
-            { token: "NAME", start: [0, 5], end: [1, 5] },
-            { token: "EQUAL", start: [2, 5], end: [3, 5] },
-            { token: "LBRACE", start: [4, 5], end: [5, 5] },
-            { token: "STRING", start: [5, 5], end: [8, 5] },
-            { token: "COLON", start: [8, 5], end: [9, 5] },
-            { token: "NUMBER", start: [9, 5], end: [10, 5] },
-            { token: "COMMA", start: [10, 5], end: [11, 5] },
-            { token: "STRING", start: [2, 6], end: [5, 6] },
-            { token: "COLON", start: [5, 6], end: [6, 6] },
-            { token: "NUMBER", start: [6, 6], end: [7, 6] },
-            { token: "RBRACE", start: [7, 6], end: [8, 6] },
-            { token: "NEWLINE", start: [8, 6], end: [8, 6] },
-            { token: "NAME", start: [0, 7], end: [1, 7] },
-            { token: "EQUAL", start: [2, 7], end: [3, 7] },
-            { token: "LPAR", start: [4, 7], end: [5, 7] },
-            { token: "NAME", start: [5, 7], end: [8, 7] },
-            { token: "LPAR", start: [8, 7], end: [9, 7] },
-            { token: "NAME", start: [9, 7], end: [13, 7] },
-            { token: "LPAR", start: [13, 7], end: [14, 7] },
-            { token: "NAME", start: [14, 7], end: [15, 7] },
-            { token: "RPAR", start: [15, 7], end: [16, 7] },
-            { token: "RPAR", start: [16, 7], end: [17, 7] },
-            { token: "PLUS", start: [18, 7], end: [19, 7] },
-            { token: "NUMBER", start: [20, 7], end: [21, 7] },
-            { token: "STAR", start: [21, 7], end: [22, 7] },
-            { token: "NAME", start: [22, 7], end: [23, 7] },
-            { token: "MINUS", start: [24, 7], end: [25, 7] },
-            { token: "NAME", start: [26, 7], end: [27, 7] },
-            { token: "LSQB", start: [27, 7], end: [28, 7] },
-            { token: "NUMBER", start: [3, 8], end: [4, 8] },
-            { token: "RSQB", start: [5, 8], end: [6, 8] },
-            { token: "MINUS", start: [3, 9], end: [4, 9] },
-            { token: "NAME", start: [5, 9], end: [6, 9] },
-            { token: "PLUS", start: [7, 9], end: [8, 9] },
-            { token: "NAME", start: [9, 9], end: [12, 9] },
-            { token: "LPAR", start: [12, 9], end: [13, 9] },
-            { token: "LBRACE", start: [13, 9], end: [14, 9] },
-            { token: "RBRACE", start: [3, 10], end: [4, 10] },
-            { token: "RPAR", start: [4, 11], end: [5, 11] },
-            { token: "RPAR", start: [2, 12], end: [3, 12] }
+            { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+            { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+            { type: "LPAR", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 5, lineNum: 1 }, end: { column: 6, lineNum: 1 }},
+            { type: "COMMA", start: { column: 6, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+            { type: "COMMA", start: { column: 9, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 2, lineNum: 2 }, end: { column: 3, lineNum: 2 }},
+            { type: "COMMA", start: { column: 3, lineNum: 2 }, end: { column: 4, lineNum: 2 }},
+            { type: "NUMBER", start: { column: 5, lineNum: 2 }, end: { column: 6, lineNum: 2 }},
+            { type: "RPAR", start: { column: 6, lineNum: 2 }, end: { column: 7, lineNum: 2 }},
+            { type: "NEWLINE", start: { column: 7, lineNum: 2 }, end: { column: 7, lineNum: 2 }},
+            { type: "NAME", start: { column: 0, lineNum: 3 }, end: { column: 1, lineNum: 3 }},
+            { type: "EQUAL", start: { column: 2, lineNum: 3 }, end: { column: 3, lineNum: 3 }},
+            { type: "LSQB", start: { column: 4, lineNum: 3 }, end: { column: 5, lineNum: 3 }},
+            { type: "NUMBER", start: { column: 5, lineNum: 3 }, end: { column: 6, lineNum: 3 }},
+            { type: "COMMA", start: { column: 6, lineNum: 3 }, end: { column: 7, lineNum: 3 }},
+            { type: "NUMBER", start: { column: 8, lineNum: 3 }, end: { column: 9, lineNum: 3 }},
+            { type: "COMMA", start: { column: 9, lineNum: 3 }, end: { column: 10, lineNum: 3 }},
+            { type: "NUMBER", start: { column: 2, lineNum: 4 }, end: { column: 3, lineNum: 4 }},
+            { type: "RSQB", start: { column: 3, lineNum: 4 }, end: { column: 4, lineNum: 4 }},
+            { type: "NEWLINE", start: { column: 4, lineNum: 4 }, end: { column: 4, lineNum: 4 }},
+            { type: "NAME", start: { column: 0, lineNum: 5 }, end: { column: 1, lineNum: 5 }},
+            { type: "EQUAL", start: { column: 2, lineNum: 5 }, end: { column: 3, lineNum: 5 }},
+            { type: "LBRACE", start: { column: 4, lineNum: 5 }, end: { column: 5, lineNum: 5 }},
+            { type: "STRING", start: { column: 5, lineNum: 5 }, end: { column: 8, lineNum: 5 }},
+            { type: "COLON", start: { column: 8, lineNum: 5 }, end: { column: 9, lineNum: 5 }},
+            { type: "NUMBER", start: { column: 9, lineNum: 5 }, end: { column: 10, lineNum: 5 }},
+            { type: "COMMA", start: { column: 10, lineNum: 5 }, end: { column: 11, lineNum: 5 }},
+            { type: "STRING", start: { column: 2, lineNum: 6 }, end: { column: 5, lineNum: 6 }},
+            { type: "COLON", start: { column: 5, lineNum: 6 }, end: { column: 6, lineNum: 6 }},
+            { type: "NUMBER", start: { column: 6, lineNum: 6 }, end: { column: 7, lineNum: 6 }},
+            { type: "RBRACE", start: { column: 7, lineNum: 6 }, end: { column: 8, lineNum: 6 }},
+            { type: "NEWLINE", start: { column: 8, lineNum: 6 }, end: { column: 8, lineNum: 6 }},
+            { type: "NAME", start: { column: 0, lineNum: 7 }, end: { column: 1, lineNum: 7 }},
+            { type: "EQUAL", start: { column: 2, lineNum: 7 }, end: { column: 3, lineNum: 7 }},
+            { type: "LPAR", start: { column: 4, lineNum: 7 }, end: { column: 5, lineNum: 7 }},
+            { type: "NAME", start: { column: 5, lineNum: 7 }, end: { column: 8, lineNum: 7 }},
+            { type: "LPAR", start: { column: 8, lineNum: 7 }, end: { column: 9, lineNum: 7 }},
+            { type: "NAME", start: { column: 9, lineNum: 7 }, end: { column: 13, lineNum: 7 }},
+            { type: "LPAR", start: { column: 13, lineNum: 7 }, end: { column: 14, lineNum: 7 }},
+            { type: "NAME", start: { column: 14, lineNum: 7 }, end: { column: 15, lineNum: 7 }},
+            { type: "RPAR", start: { column: 15, lineNum: 7 }, end: { column: 16, lineNum: 7 }},
+            { type: "RPAR", start: { column: 16, lineNum: 7 }, end: { column: 17, lineNum: 7 }},
+            { type: "PLUS", start: { column: 18, lineNum: 7 }, end: { column: 19, lineNum: 7 }},
+            { type: "NUMBER", start: { column: 20, lineNum: 7 }, end: { column: 21, lineNum: 7 }},
+            { type: "STAR", start: { column: 21, lineNum: 7 }, end: { column: 22, lineNum: 7 }},
+            { type: "NAME", start: { column: 22, lineNum: 7 }, end: { column: 23, lineNum: 7 }},
+            { type: "MINUS", start: { column: 24, lineNum: 7 }, end: { column: 25, lineNum: 7 }},
+            { type: "NAME", start: { column: 26, lineNum: 7 }, end: { column: 27, lineNum: 7 }},
+            { type: "LSQB", start: { column: 27, lineNum: 7 }, end: { column: 28, lineNum: 7 }},
+            { type: "NUMBER", start: { column: 3, lineNum: 8 }, end: { column: 4, lineNum: 8 }},
+            { type: "RSQB", start: { column: 5, lineNum: 8 }, end: { column: 6, lineNum: 8 }},
+            { type: "MINUS", start: { column: 3, lineNum: 9 }, end: { column: 4, lineNum: 9 }},
+            { type: "NAME", start: { column: 5, lineNum: 9 }, end: { column: 6, lineNum: 9 }},
+            { type: "PLUS", start: { column: 7, lineNum: 9 }, end: { column: 8, lineNum: 9 }},
+            { type: "NAME", start: { column: 9, lineNum: 9 }, end: { column: 12, lineNum: 9 }},
+            { type: "LPAR", start: { column: 12, lineNum: 9 }, end: { column: 13, lineNum: 9 }},
+            { type: "LBRACE", start: { column: 13, lineNum: 9 }, end: { column: 14, lineNum: 9 }},
+            { type: "RBRACE", start: { column: 3, lineNum: 10 }, end: { column: 4, lineNum: 10 }},
+            { type: "RPAR", start: { column: 4, lineNum: 11 }, end: { column: 5, lineNum: 11 }},
+            { type: "RPAR", start: { column: 2, lineNum: 12 }, end: { column: 3, lineNum: 12 }}
       ]);
     },
 
     'backslash means line continuation': function () {
       assertTokensEqual('x = 1 \\\n+ 1', [
-        { token: "NAME", start: [0, 1], end: [1, 1] },
-        { token: "EQUAL", start: [2, 1], end: [3, 1] },
-        { token: "NUMBER", start: [4, 1], end: [5, 1] },
-        { token: "PLUS", start: [0, 2], end: [1, 2] },
-        { token: "NUMBER", start: [2, 2], end: [3, 2] }
+        { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+        { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+        { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+        { type: "PLUS", start: { column: 0, lineNum: 2 }, end: { column: 1, lineNum: 2 }},
+        { type: "NUMBER", start: { column: 2, lineNum: 2 }, end: { column: 3, lineNum: 2 }}
       ]);
     },
 
     'backslash does not mean line continuation in comments': function () {
       assertTokensEqual('# Backslash does not means continuation in comments :\\\nx = 0', [
-        { token: "NAME", start: [0, 2], end: [1, 2] },
-        { token: "EQUAL", start: [2, 2], end: [3, 2] },
-        { token: "NUMBER", start: [4, 2], end: [5, 2] }
+        { type: "NAME", start: { column: 0, lineNum: 2 }, end: { column: 1, lineNum: 2 }},
+        { type: "EQUAL", start: { column: 2, lineNum: 2 }, end: { column: 3, lineNum: 2 }},
+        { type: "NUMBER", start: { column: 4, lineNum: 2 }, end: { column: 5, lineNum: 2 }}
       ]);
     },
 
     'ordinary integers': {
       '0xff != 255': function () {
         assertTokensEqual('0xff != 255', [
-          { token: "NUMBER", start: [0, 1], end: [4, 1] },
-          { token: "NOTEQUAL", start: [5, 1], end: [7, 1] },
-          { token: "NUMBER", start: [8, 1], end: [11, 1] }
+          { type: "NUMBER", start: { column: 0, lineNum: 1 }, end: { column: 4, lineNum: 1 }},
+          { type: "NOTEQUAL", start: { column: 5, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 8, lineNum: 1 }, end: { column: 11, lineNum: 1 }}
         ]);
       },
       '0o377 != 255': function () {
         assertTokensEqual('0o377 != 255', [
-          { token: "NUMBER", start: [0, 1], end: [5, 1] },
-          { token: "NOTEQUAL", start: [6, 1], end: [8, 1] },
-          { token: "NUMBER", start: [9, 1], end: [12, 1] },
+          { type: "NUMBER", start: { column: 0, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+          { type: "NOTEQUAL", start: { column: 6, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 9, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
         ]);
       },
       '2147483647   != 0o17777777777': function () {
         assertTokensEqual('2147483647   != 0o17777777777', [
-          { token: "NUMBER", start: [0, 1], end: [10, 1] },
-          { token: "NOTEQUAL", start: [13, 1], end: [15, 1] },
-          { token: "NUMBER", start: [16, 1], end: [29, 1] },
+          { type: "NUMBER", start: { column: 0, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "NOTEQUAL", start: { column: 13, lineNum: 1 }, end: { column: 15, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 16, lineNum: 1 }, end: { column: 29, lineNum: 1 }},
         ]);
       },
       '-2147483647-1 != 0o20000000000': function () {
         assertTokensEqual('-2147483647-1 != 0o20000000000', [
-          { token: "MINUS", start: [0, 1], end: [1, 1] },
-          { token: "NUMBER", start: [1, 1], end: [11, 1] },
-          { token: "MINUS", start: [11, 1], end: [12, 1] },
-          { token: "NUMBER", start: [12, 1], end: [13, 1] },
-          { token: "NOTEQUAL", start: [14, 1], end: [16, 1] },
-          { token: "NUMBER", start: [17, 1], end: [30, 1] }
+          { type: "MINUS", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 1, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "MINUS", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 12, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "NOTEQUAL", start: { column: 14, lineNum: 1 }, end: { column: 16, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 17, lineNum: 1 }, end: { column: 30, lineNum: 1 }}
         ]);
       },
       '0o37777777777 != -1': function () {
         assertTokensEqual('0o37777777777 != -1', [
-          { token: "NUMBER", start: [0, 1], end: [13, 1] },
-          { token: "NOTEQUAL", start: [14, 1], end: [16, 1] },
-          { token: "MINUS", start: [17, 1], end: [18, 1] },
-          { token: "NUMBER", start: [18, 1], end: [19, 1] }
+          { type: "NUMBER", start: { column: 0, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "NOTEQUAL", start: { column: 14, lineNum: 1 }, end: { column: 16, lineNum: 1 }},
+          { type: "MINUS", start: { column: 17, lineNum: 1 }, end: { column: 18, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 18, lineNum: 1 }, end: { column: 19, lineNum: 1 }}
         ]);
       },
       '0xffffffff != -1; 0o37777777777 != -1; -0o1234567 == 0O001234567; 0b10101 == 0B00010101': function () {
         assertTokensEqual('0xffffffff != -1; 0o37777777777 != -1; -0o1234567 == 0O001234567; 0b10101 == 0B00010101', [
-          { token: "NUMBER", start: [0, 1], end: [10, 1] },
-          { token: "NOTEQUAL", start: [11, 1], end: [13, 1] },
-          { token: "MINUS", start: [14, 1], end: [15, 1] },
-          { token: "NUMBER", start: [15, 1], end: [16, 1] },
-          { token: "SEMI", start: [16, 1], end: [17, 1] },
-          { token: "NUMBER", start: [18, 1], end: [31, 1] },
-          { token: "NOTEQUAL", start: [32, 1], end: [34, 1] },
-          { token: "MINUS", start: [35, 1], end: [36, 1] },
-          { token: "NUMBER", start: [36, 1], end: [37, 1] },
-          { token: "SEMI", start: [37, 1], end: [38, 1] },
-          { token: "MINUS", start: [39, 1], end: [40, 1] },
-          { token: "NUMBER", start: [40, 1], end: [49, 1] },
-          { token: "EQEQUAL", start: [50, 1], end: [52, 1] },
-          { token: "NUMBER", start: [53, 1], end: [64, 1] },
-          { token: "SEMI", start: [64, 1], end: [65, 1] },
-          { token: "NUMBER", start: [66, 1], end: [73, 1] },
-          { token: "EQEQUAL", start: [74, 1], end: [76, 1] },
-          { token: "NUMBER", start: [77, 1], end: [87, 1] }
+          { type: "NUMBER", start: { column: 0, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "NOTEQUAL", start: { column: 11, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "MINUS", start: { column: 14, lineNum: 1 }, end: { column: 15, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 15, lineNum: 1 }, end: { column: 16, lineNum: 1 }},
+          { type: "SEMI", start: { column: 16, lineNum: 1 }, end: { column: 17, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 18, lineNum: 1 }, end: { column: 31, lineNum: 1 }},
+          { type: "NOTEQUAL", start: { column: 32, lineNum: 1 }, end: { column: 34, lineNum: 1 }},
+          { type: "MINUS", start: { column: 35, lineNum: 1 }, end: { column: 36, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 36, lineNum: 1 }, end: { column: 37, lineNum: 1 }},
+          { type: "SEMI", start: { column: 37, lineNum: 1 }, end: { column: 38, lineNum: 1 }},
+          { type: "MINUS", start: { column: 39, lineNum: 1 }, end: { column: 40, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 40, lineNum: 1 }, end: { column: 49, lineNum: 1 }},
+          { type: "EQEQUAL", start: { column: 50, lineNum: 1 }, end: { column: 52, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 53, lineNum: 1 }, end: { column: 64, lineNum: 1 }},
+          { type: "SEMI", start: { column: 64, lineNum: 1 }, end: { column: 65, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 66, lineNum: 1 }, end: { column: 73, lineNum: 1 }},
+          { type: "EQEQUAL", start: { column: 74, lineNum: 1 }, end: { column: 76, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 77, lineNum: 1 }, end: { column: 87, lineNum: 1 }}
         ]);
       }
     },
@@ -283,37 +290,37 @@ define([
     'long integers': {
       'x = 0': function () {
         assertTokensEqual('x = 0', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [5, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }}
         ]);
       },
       'x = 0xffffffffffffffff': function () {
         assertTokensEqual('x = 0xffffffffffffffff', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [22, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 22, lineNum: 1 }}
         ]);
       },
       'x = 0o77777777777777777': function () {
         assertTokensEqual('x = 0o77777777777777777', [
-          { token: "NAME", start: [0, 1], end: [1, 1] }, 
-          { token: "EQUAL", start: [2, 1], end: [3, 1] }, 
-          { token: "NUMBER", start: [4, 1], end: [23, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }}, 
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }}, 
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 23, lineNum: 1 }}
         ]);
       },
       'x = 0B11101010111111111': function () {
         assertTokensEqual('x = 0B11101010111111111', [
-          { token: "NAME", start: [0, 1], end: [1, 1] }, 
-          { token: "EQUAL", start: [2, 1], end: [3, 1] }, 
-          { token: "NUMBER", start: [4, 1], end: [23, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }}, 
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }}, 
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 23, lineNum: 1 }}
         ]);
       },
       'x = 123456789012345678901234567890': function () {
         assertTokensEqual('x = 123456789012345678901234567890', [
-          { token: "NAME", start: [0, 1], end: [1, 1] }, 
-          { token: "EQUAL", start: [2, 1], end: [3, 1] }, 
-          { token: "NUMBER", start: [4, 1], end: [34, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }}, 
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }}, 
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 34, lineNum: 1 }}
         ]);
       },
     },
@@ -321,86 +328,86 @@ define([
     'floating point numbers': {
       'x = 3.14': function () {
         assertTokensEqual('x = 3.14', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [8, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 8, lineNum: 1 }}
         ]);
       },
       'x = 314.': function () {
         assertTokensEqual('x = 314.', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [8, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
         ]);
       },
       'x = 0.314': function () {
         assertTokensEqual('x = 0.314', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [9, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
         ]);
       },
       'x = 000.314': function () {
         assertTokensEqual('x = 000.314', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [11, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
         ]);
       },
       'x = .314': function () {
         assertTokensEqual('x = .314', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [8, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
         ]);
       },
       'x = 3e14': function () {
         assertTokensEqual('x = 3e14', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [8, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
         ]);
       },
       'x = 3E14': function () {
         assertTokensEqual('x = 3E14', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [8, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
         ]);
       },
       'x = 3e-14': function () {
         assertTokensEqual('x = 3e-14', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [9, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
         ]);
       },
       'x = 3e+14': function () {
         assertTokensEqual('x = 3e+14', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [9, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
         ]);
       },
       'x = 3.e14': function () {
         assertTokensEqual('x = 3.e14', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [9, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
         ]);
       },
       'x = .3e14': function () {
         assertTokensEqual('x = .3e14', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [9, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
         ]);
       },
       'x = 3.1e4': function () {
         assertTokensEqual('x = 3.1e4', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [9, 1] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
         ]);
       }
     },
@@ -408,263 +415,263 @@ define([
     'string literals': {
       'x = \'\'; y = "";': function () {
         assertTokensEqual('x = \'\'; y = "";', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [6, 1] },
-          { token: "SEMI", start: [6, 1], end: [7, 1] },
-          { token: "NAME", start: [8, 1], end: [9, 1] },
-          { token: "EQUAL", start: [10, 1], end: [11, 1] },
-          { token: "STRING", start: [12, 1], end: [14, 1] },
-          { token: "SEMI", start: [14, 1], end: [15, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 6, lineNum: 1 }},
+          { type: "SEMI", start: { column: 6, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+          { type: "NAME", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 10, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "STRING", start: { column: 12, lineNum: 1 }, end: { column: 14, lineNum: 1 }},
+          { type: "SEMI", start: { column: 14, lineNum: 1 }, end: { column: 15, lineNum: 1 }}
         ]);
       },
       "x = '\\''; y = \"'\";": function () {
         assertTokensEqual("x = '\\''; y = \"'\";", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [8, 1] },
-          { token: "SEMI", start: [8, 1], end: [9, 1] },
-          { token: "NAME", start: [10, 1], end: [11, 1] },
-          { token: "EQUAL", start: [12, 1], end: [13, 1] },
-          { token: "STRING", start: [14, 1], end: [17, 1] },
-          { token: "SEMI", start: [17, 1], end: [18, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
+          { type: "SEMI", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+          { type: "NAME", start: { column: 10, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 12, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "STRING", start: { column: 14, lineNum: 1 }, end: { column: 17, lineNum: 1 }},
+          { type: "SEMI", start: { column: 17, lineNum: 1 }, end: { column: 18, lineNum: 1 }}
         ]);
       },
       'x = \'"\'; y = "\\"";': function () {
         assertTokensEqual('x = \'"\'; y = "\\"";', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [7, 1] },
-          { token: "SEMI", start: [7, 1], end: [8, 1] },
-          { token: "NAME", start: [9, 1], end: [10, 1] },
-          { token: "EQUAL", start: [11, 1], end: [12, 1] },
-          { token: "STRING", start: [13, 1], end: [17, 1] },
-          { token: "SEMI", start: [17, 1], end: [18, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+          { type: "SEMI", start: { column: 7, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
+          { type: "NAME", start: { column: 9, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "STRING", start: { column: 13, lineNum: 1 }, end: { column: 17, lineNum: 1 }},
+          { type: "SEMI", start: { column: 17, lineNum: 1 }, end: { column: 18, lineNum: 1 }}
         ]);
       },
       'x = "doesn\'t \\"shrink\\" does it"': function () {
         assertTokensEqual('x = "doesn\'t \\"shrink\\" does it"', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [32, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 32, lineNum: 1 }}
         ]);
       },
       "y = 'doesn\\'t \"shrink\" does it'": function () {
         assertTokensEqual("y = 'doesn\\'t \"shrink\" does it'", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [31, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 31, lineNum: 1 }}
         ]);
       },
       'x = "does \\"shrink\\" doesn\'t it"': function () {
         assertTokensEqual('x = "does \\"shrink\\" doesn\'t it"', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [32, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 32, lineNum: 1 }}
         ]);
       },
       "y = 'does \"shrink\" doesn\\'t it'": function () {
         assertTokensEqual("y = 'does \"shrink\" doesn\\'t it'", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [31, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 31, lineNum: 1 }}
         ]);
       },
       "y = '''\nThe \"quick\"\nbrown fox\njumps over\nthe 'lazy' dog.\n'''": function () {
         assertTokensEqual("y = '''\nThe \"quick\"\nbrown fox\njumps over\nthe 'lazy' dog.\n'''", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [3, 6] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 3, lineNum: 6 }}
         ]);
       },
       "y = '\\nThe \"quick\"\\nbrown fox\\njumps over\\nthe \\'lazy\\' dog.\\n'": function () {
         assertTokensEqual("y = '\\nThe \"quick\"\\nbrown fox\\njumps over\\nthe \\'lazy\\' dog.\\n'", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [63, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 63, lineNum: 1 }}
         ]);
       },
       'x = """\nThe "quick"\nbrown fox\njumps over\nthe \'lazy\' dog.\n"""': function () {
         assertTokensEqual('x = """\nThe "quick"\nbrown fox\njumps over\nthe \'lazy\' dog.\n"""', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [3, 6] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 3, lineNum: 6 }}
         ]);
       },
       'y = "\\n\\\nThe \\"quick\\"\\n\\\nbrown fox\\n\\\njumps over\\n\\\nthe \'lazy\' dog.\\n\\\n";': function () {
         assertTokensEqual('y = "\\n\\\nThe \\"quick\\"\\n\\\nbrown fox\\n\\\njumps over\\n\\\nthe \'lazy\' dog.\\n\\\n";', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [1, 6] },
-          { token: "SEMI", start: [1, 6], end: [2, 6] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 1, lineNum: 6 }},
+          { type: "SEMI", start: { column: 1, lineNum: 6 }, end: { column: 2, lineNum: 6 }}
         ]);
       },
       'y = \'\\n\\\nThe \\"quick\\"\\n\\\nbrown fox\\n\\\njumps over\\n\\\nthe \\\'lazy\\\' dog.\\n\\\n\';': function () {
         assertTokensEqual('y = "\\n\\\nThe \\"quick\\"\\n\\\nbrown fox\\n\\\njumps over\\n\\\nthe \'lazy\' dog.\\n\\\n";', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [1, 6] },
-          { token: "SEMI", start: [1, 6], end: [2, 6] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 1, lineNum: 6 }},
+          { type: "SEMI", start: { column: 1, lineNum: 6 }, end: { column: 2, lineNum: 6 }}
         ]);
       },
       "x = r'\\\\' + R'\\\\'": function () {
         assertTokensEqual("x = r'\\\\' + R'\\\\'", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [9, 1] },
-          { token: "PLUS", start: [10, 1], end: [11, 1] },
-          { token: "STRING", start: [12, 1], end: [17, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+          { type: "PLUS", start: { column: 10, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "STRING", start: { column: 12, lineNum: 1 }, end: { column: 17, lineNum: 1 }}
         ]);
       },
       "x = r'\\'' + ''": function () {
         assertTokensEqual("x = r'\\'' + ''", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [9, 1] },
-          { token: "PLUS", start: [10, 1], end: [11, 1] },
-          { token: "STRING", start: [12, 1], end: [14, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+          { type: "PLUS", start: { column: 10, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "STRING", start: { column: 12, lineNum: 1 }, end: { column: 14, lineNum: 1 }}
         ]);
       },
       "y = r'''\nfoo bar \\\\\nbaz''' + R'''\nfoo'''": function () {
         assertTokensEqual("y = r'''\nfoo bar \\\\\nbaz''' + R'''\nfoo'''", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [6, 3] },
-          { token: "PLUS", start: [7, 3], end: [8, 3] },
-          { token: "STRING", start: [9, 3], end: [6, 4] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 6, lineNum: 3 }},
+          { type: "PLUS", start: { column: 7, lineNum: 3 }, end: { column: 8, lineNum: 3 }},
+          { type: "STRING", start: { column: 9, lineNum: 3 }, end: { column: 6, lineNum: 4 }}
         ]);
       },
       "y = r\"\"\"foo\nbar \\\\ baz\n\"\"\" + R'''spam\n'''": function () {
         assertTokensEqual("y = r\"\"\"foo\nbar \\\\ baz\n\"\"\" + R'''spam\n'''", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [3, 3] },
-          { token: "PLUS", start: [4, 3], end: [5, 3] },
-          { token: "STRING", start: [6, 3], end: [3, 4] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 3, lineNum: 3 }},
+          { type: "PLUS", start: { column: 4, lineNum: 3 }, end: { column: 5, lineNum: 3 }},
+          { type: "STRING", start: { column: 6, lineNum: 3 }, end: { column: 3, lineNum: 4 }}
         ]);
       },
       "x = b'abc' + B'ABC'": function () {
         assertTokensEqual("x = b'abc' + B'ABC'", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [10, 1] },
-          { token: "PLUS", start: [11, 1], end: [12, 1] },
-          { token: "STRING", start: [13, 1], end: [19, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "PLUS", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "STRING", start: { column: 13, lineNum: 1 }, end: { column: 19, lineNum: 1 }}
         ]);
       },
       'y = b"abc" + B"ABC"': function () {
         assertTokensEqual('y = b"abc" + B"ABC"', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [10, 1] },
-          { token: "PLUS", start: [11, 1], end: [12, 1] },
-          { token: "STRING", start: [13, 1], end: [19, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "PLUS", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "STRING", start: { column: 13, lineNum: 1 }, end: { column: 19, lineNum: 1 }}
         ]);
       },
       "x = br'abc' + Br'ABC' + bR'ABC' + BR'ABC'": function () {
         assertTokensEqual("x = br'abc' + Br'ABC' + bR'ABC' + BR'ABC'", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [11, 1] },
-          { token: "PLUS", start: [12, 1], end: [13, 1] },
-          { token: "STRING", start: [14, 1], end: [21, 1] },
-          { token: "PLUS", start: [22, 1], end: [23, 1] },
-          { token: "STRING", start: [24, 1], end: [31, 1] },
-          { token: "PLUS", start: [32, 1], end: [33, 1] },
-          { token: "STRING", start: [34, 1], end: [41, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "PLUS", start: { column: 12, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "STRING", start: { column: 14, lineNum: 1 }, end: { column: 21, lineNum: 1 }},
+          { type: "PLUS", start: { column: 22, lineNum: 1 }, end: { column: 23, lineNum: 1 }},
+          { type: "STRING", start: { column: 24, lineNum: 1 }, end: { column: 31, lineNum: 1 }},
+          { type: "PLUS", start: { column: 32, lineNum: 1 }, end: { column: 33, lineNum: 1 }},
+          { type: "STRING", start: { column: 34, lineNum: 1 }, end: { column: 41, lineNum: 1 }}
         ]);
       },
       'y = br"abc" + Br"ABC" + bR"ABC" + BR"ABC"': function () {
         assertTokensEqual('y = br"abc" + Br"ABC" + bR"ABC" + BR"ABC"', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [11, 1] },
-          { token: "PLUS", start: [12, 1], end: [13, 1] },
-          { token: "STRING", start: [14, 1], end: [21, 1] },
-          { token: "PLUS", start: [22, 1], end: [23, 1] },
-          { token: "STRING", start: [24, 1], end: [31, 1] },
-          { token: "PLUS", start: [32, 1], end: [33, 1] },
-          { token: "STRING", start: [34, 1], end: [41, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "PLUS", start: { column: 12, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "STRING", start: { column: 14, lineNum: 1 }, end: { column: 21, lineNum: 1 }},
+          { type: "PLUS", start: { column: 22, lineNum: 1 }, end: { column: 23, lineNum: 1 }},
+          { type: "STRING", start: { column: 24, lineNum: 1 }, end: { column: 31, lineNum: 1 }},
+          { type: "PLUS", start: { column: 32, lineNum: 1 }, end: { column: 33, lineNum: 1 }},
+          { type: "STRING", start: { column: 34, lineNum: 1 }, end: { column: 41, lineNum: 1 }}
         ]);
       },
       "x = rb'abc' + rB'ABC' + Rb'ABC' + RB'ABC'": function () {
         assertTokensEqual("x = rb'abc' + rB'ABC' + Rb'ABC' + RB'ABC'", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [11, 1] },
-          { token: "PLUS", start: [12, 1], end: [13, 1] },
-          { token: "STRING", start: [14, 1], end: [21, 1] },
-          { token: "PLUS", start: [22, 1], end: [23, 1] },
-          { token: "STRING", start: [24, 1], end: [31, 1] },
-          { token: "PLUS", start: [32, 1], end: [33, 1] },
-          { token: "STRING", start: [34, 1], end: [41, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "PLUS", start: { column: 12, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "STRING", start: { column: 14, lineNum: 1 }, end: { column: 21, lineNum: 1 }},
+          { type: "PLUS", start: { column: 22, lineNum: 1 }, end: { column: 23, lineNum: 1 }},
+          { type: "STRING", start: { column: 24, lineNum: 1 }, end: { column: 31, lineNum: 1 }},
+          { type: "PLUS", start: { column: 32, lineNum: 1 }, end: { column: 33, lineNum: 1 }},
+          { type: "STRING", start: { column: 34, lineNum: 1 }, end: { column: 41, lineNum: 1 }}
         ]);
       },
       'y = rb"abc" + rB"ABC" + Rb"ABC" + RB"ABC"': function () {
         assertTokensEqual('y = rb"abc" + rB"ABC" + Rb"ABC" + RB"ABC"', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [11, 1] },
-          { token: "PLUS", start: [12, 1], end: [13, 1] },
-          { token: "STRING", start: [14, 1], end: [21, 1] },
-          { token: "PLUS", start: [22, 1], end: [23, 1] },
-          { token: "STRING", start: [24, 1], end: [31, 1] },
-          { token: "PLUS", start: [32, 1], end: [33, 1] },
-          { token: "STRING", start: [34, 1], end: [41, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "PLUS", start: { column: 12, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "STRING", start: { column: 14, lineNum: 1 }, end: { column: 21, lineNum: 1 }},
+          { type: "PLUS", start: { column: 22, lineNum: 1 }, end: { column: 23, lineNum: 1 }},
+          { type: "STRING", start: { column: 24, lineNum: 1 }, end: { column: 31, lineNum: 1 }},
+          { type: "PLUS", start: { column: 32, lineNum: 1 }, end: { column: 33, lineNum: 1 }},
+          { type: "STRING", start: { column: 34, lineNum: 1 }, end: { column: 41, lineNum: 1 }}
         ]);
       },
       "x = br'\\\\' + BR'\\\\'": function () {
         assertTokensEqual("x = br'\\\\' + BR'\\\\'", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [10, 1] },
-          { token: "PLUS", start: [11, 1], end: [12, 1] },
-          { token: "STRING", start: [13, 1], end: [19, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "PLUS", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "STRING", start: { column: 13, lineNum: 1 }, end: { column: 19, lineNum: 1 }}
         ]);
       },
       "x = rb'\\\\' + RB'\\\\'": function () {
         assertTokensEqual("x = rb'\\\\' + RB'\\\\'", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [10, 1] },
-          { token: "PLUS", start: [11, 1], end: [12, 1] },
-          { token: "STRING", start: [13, 1], end: [19, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "PLUS", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "STRING", start: { column: 13, lineNum: 1 }, end: { column: 19, lineNum: 1 }}
         ]);
       },
       "x = br'\\'' + ''": function () {
         assertTokensEqual("x = br'\\'' + ''", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [10, 1] },
-          { token: "PLUS", start: [11, 1], end: [12, 1] },
-          { token: "STRING", start: [13, 1], end: [15, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "PLUS", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "STRING", start: { column: 13, lineNum: 1 }, end: { column: 15, lineNum: 1 }}
         ]);
       },
       "x = rb'\\'' + ''": function () {
         assertTokensEqual("x = rb'\\'' + ''", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [10, 1] },
-          { token: "PLUS", start: [11, 1], end: [12, 1] },
-          { token: "STRING", start: [13, 1], end: [15, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "PLUS", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "STRING", start: { column: 13, lineNum: 1 }, end: { column: 15, lineNum: 1 }}
         ]);
       },
       "y = br'''\nfoo bar \\\\\nbaz''' + BR'''\nfoo'''": function () {
         assertTokensEqual("y = br'''\nfoo bar \\\\\nbaz''' + BR'''\nfoo'''", [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [6, 3] },
-          { token: "PLUS", start: [7, 3], end: [8, 3] },
-          { token: "STRING", start: [9, 3], end: [6, 4] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 6, lineNum: 3 }},
+          { type: "PLUS", start: { column: 7, lineNum: 3 }, end: { column: 8, lineNum: 3 }},
+          { type: "STRING", start: { column: 9, lineNum: 3 }, end: { column: 6, lineNum: 4 }},
         ]);
       },
       'y = rB"""foo\nbar \\\\ baz\n""" + Rb\'\'\'spam\n\'\'\'': function () {
         assertTokensEqual('y = rB"""foo\nbar \\\\ baz\n""" + Rb\'\'\'spam\n\'\'\'', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "STRING", start: [4, 1], end: [3, 3] },
-          { token: "PLUS", start: [4, 3], end: [5, 3] },
-          { token: "STRING", start: [6, 3], end: [3, 4] },
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "STRING", start: { column: 4, lineNum: 1 }, end: { column: 3, lineNum: 3 }},
+          { type: "PLUS", start: { column: 4, lineNum: 3 }, end: { column: 5, lineNum: 3 }},
+          { type: "STRING", start: { column: 6, lineNum: 3 }, end: { column: 3, lineNum: 4 }},
         ]);
       }
     },
@@ -686,80 +693,80 @@ define([
         '        if 1:\n' +
         '          x = 2\n',
         [
-          { token: "NAME", start: [0, 1], end: [2, 1] },
-          { token: "NUMBER", start: [3, 1], end: [4, 1] },
-          { token: "COLON", start: [4, 1], end: [5, 1] },
-          { token: "NEWLINE", start: [5, 1], end: [5, 1] },
-          { token: "INDENT", lineNum: 2 },
-          { token: "NAME", start: [4, 2], end: [5, 2] },
-          { token: "EQUAL", start: [6, 2], end: [7, 2] },
-          { token: "NUMBER", start: [8, 2], end: [9, 2] },
-          { token: "NEWLINE", start: [9, 2], end: [9, 2] },
-          { token: "DEDENT", lineNum: 2 },
-          { token: "NAME", start: [0, 3], end: [2, 3] },
-          { token: "NUMBER", start: [3, 3], end: [4, 3] },
-          { token: "COLON", start: [4, 3], end: [5, 3] },
-          { token: "NEWLINE", start: [5, 3], end: [5, 3] },
-          { token: "INDENT", lineNum: 4 },
-          { token: "NAME", start: [8, 4], end: [9, 4] },
-          { token: "EQUAL", start: [10, 4], end: [11, 4] },
-          { token: "NUMBER", start: [12, 4], end: [13, 4] },
-          { token: "NEWLINE", start: [13, 4], end: [13, 4] },
-          { token: "DEDENT", lineNum: 4 },
-          { token: "NAME", start: [0, 5], end: [2, 5] },
-          { token: "NUMBER", start: [3, 5], end: [4, 5] },
-          { token: "COLON", start: [4, 5], end: [5, 5] },
-          { token: "NEWLINE", start: [5, 5], end: [5, 5] },
-          { token: "INDENT", lineNum: 6 },
-          { token: "NAME", start: [4, 6], end: [9, 6] },
-          { token: "NUMBER", start: [10, 6], end: [11, 6] },
-          { token: "COLON", start: [11, 6], end: [12, 6] },
-          { token: "NEWLINE", start: [12, 6], end: [12, 6] },
-          { token: "INDENT", lineNum: 7 },
-          { token: "NAME", start: [5, 7], end: [7, 7] },
-          { token: "NUMBER", start: [8, 7], end: [9, 7] },
-          { token: "COLON", start: [9, 7], end: [10, 7] },
-          { token: "NEWLINE", start: [10, 7], end: [10, 7] },
-          { token: "INDENT", lineNum: 8 },
-          { token: "NAME", start: [11, 8], end: [12, 8] },
-          { token: "EQUAL", start: [13, 8], end: [14, 8] },
-          { token: "NUMBER", start: [15, 8], end: [16, 8] },
-          { token: "NEWLINE", start: [16, 8], end: [16, 8] },
-          { token: "DEDENT", lineNum: 9 },
-          { token: "NAME", start: [5, 9], end: [6, 9] },
-          { token: "EQUAL", start: [7, 9], end: [8, 9] },
-          { token: "NUMBER", start: [9, 9], end: [10, 9] },
-          { token: "NEWLINE", start: [10, 9], end: [10, 9] },
-          { token: "DEDENT", lineNum: 9 },
-          { token: "DEDENT", lineNum: 9 },
-          { token: "NAME", start: [0, 10], end: [2, 10] },
-          { token: "NUMBER", start: [3, 10], end: [4, 10] },
-          { token: "COLON", start: [4, 10], end: [5, 10] },
-          { token: "NEWLINE", start: [5, 10], end: [5, 10] },
-          { token: "INDENT", lineNum: 11 },
-          { token: "NAME", start: [2, 11], end: [4, 11] },
-          { token: "NUMBER", start: [5, 11], end: [6, 11] },
-          { token: "COLON", start: [6, 11], end: [7, 11] },
-          { token: "NEWLINE", start: [7, 11], end: [7, 11] },
-          { token: "INDENT", lineNum: 12 },
-          { token: "NAME", start: [3, 12], end: [8, 12] },
-          { token: "NUMBER", start: [9, 12], end: [10, 12] },
-          { token: "COLON", start: [10, 12], end: [11, 12] },
-          { token: "NEWLINE", start: [11, 12], end: [11, 12] },
-          { token: "INDENT", lineNum: 13 },
-          { token: "NAME", start: [8, 13], end: [10, 13] },
-          { token: "NUMBER", start: [11, 13], end: [12, 13] },
-          { token: "COLON", start: [12, 13], end: [13, 13] },
-          { token: "NEWLINE", start: [13, 13], end: [13, 13] },
-          { token: "INDENT", lineNum: 14 },
-          { token: "NAME", start: [10, 14], end: [11, 14] },
-          { token: "EQUAL", start: [12, 14], end: [13, 14] },
-          { token: "NUMBER", start: [14, 14], end: [15, 14] },
-          { token: "NEWLINE", start: [15, 14], end: [15, 14] },
-          { token: "DEDENT", lineNum: 14 },
-          { token: "DEDENT", lineNum: 14 },
-          { token: "DEDENT", lineNum: 14 },
-          { token: "DEDENT", lineNum: 14 }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 2, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 3, lineNum: 1 }, end: { column: 4, lineNum: 1 }},
+          { type: "COLON", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+          { type: "NEWLINE", start: { column: 5, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+          { type: "INDENT", start: { column: 4, lineNum: 2 }},
+          { type: "NAME", start: { column: 4, lineNum: 2 }, end: { column: 5, lineNum: 2 }},
+          { type: "EQUAL", start: { column: 6, lineNum: 2 }, end: { column: 7, lineNum: 2 }},
+          { type: "NUMBER", start: { column: 8, lineNum: 2 }, end: { column: 9, lineNum: 2 }},
+          { type: "NEWLINE", start: { column: 9, lineNum: 2 }, end: { column: 9, lineNum: 2 }},
+          { type: "DEDENT", start: { column: 0, lineNum: 2 }},
+          { type: "NAME", start: { column: 0, lineNum: 3 }, end: { column: 2, lineNum: 3 }},
+          { type: "NUMBER", start: { column: 3, lineNum: 3 }, end: { column: 4, lineNum: 3 }},
+          { type: "COLON", start: { column: 4, lineNum: 3 }, end: { column: 5, lineNum: 3 }},
+          { type: "NEWLINE", start: { column: 5, lineNum: 3 }, end: { column: 5, lineNum: 3 }},
+          { type: "INDENT", start: { column: 8, lineNum: 4 }},
+          { type: "NAME", start: { column: 8, lineNum: 4 }, end: { column: 9, lineNum: 4 }},
+          { type: "EQUAL", start: { column: 10, lineNum: 4 }, end: { column: 11, lineNum: 4 }},
+          { type: "NUMBER", start: { column: 12, lineNum: 4 }, end: { column: 13, lineNum: 4 }},
+          { type: "NEWLINE", start: { column: 13, lineNum: 4 }, end: { column: 13, lineNum: 4 }},
+          { type: "DEDENT", start: { column: 0, lineNum: 4 }},
+          { type: "NAME", start: { column: 0, lineNum: 5 }, end: { column: 2, lineNum: 5 }},
+          { type: "NUMBER", start: { column: 3, lineNum: 5 }, end: { column: 4, lineNum: 5 }},
+          { type: "COLON", start: { column: 4, lineNum: 5 }, end: { column: 5, lineNum: 5 }},
+          { type: "NEWLINE", start: { column: 5, lineNum: 5 }, end: { column: 5, lineNum: 5 }},
+          { type: "INDENT", start: { column: 4, lineNum: 6 }},
+          { type: "NAME", start: { column: 4, lineNum: 6 }, end: { column: 9, lineNum: 6 }},
+          { type: "NUMBER", start: { column: 10, lineNum: 6 }, end: { column: 11, lineNum: 6 }},
+          { type: "COLON", start: { column: 11, lineNum: 6 }, end: { column: 12, lineNum: 6 }},
+          { type: "NEWLINE", start: { column: 12, lineNum: 6 }, end: { column: 12, lineNum: 6 }},
+          { type: "INDENT", start: { column: 5, lineNum: 7 }},
+          { type: "NAME", start: { column: 5, lineNum: 7 }, end: { column: 7, lineNum: 7 }},
+          { type: "NUMBER", start: { column: 8, lineNum: 7 }, end: { column: 9, lineNum: 7 }},
+          { type: "COLON", start: { column: 9, lineNum: 7 }, end: { column: 10, lineNum: 7 }},
+          { type: "NEWLINE", start: { column: 10, lineNum: 7 }, end: { column: 10, lineNum: 7 }},
+          { type: "INDENT", start: { column: 11, lineNum: 8 }},
+          { type: "NAME", start: { column: 11, lineNum: 8 }, end: { column: 12, lineNum: 8 }},
+          { type: "EQUAL", start: { column: 13, lineNum: 8 }, end: { column: 14, lineNum: 8 }},
+          { type: "NUMBER", start: { column: 15, lineNum: 8 }, end: { column: 16, lineNum: 8 }},
+          { type: "NEWLINE", start: { column: 16, lineNum: 8 }, end: { column: 16, lineNum: 8 }},
+          { type: "DEDENT", start: { column: 5, lineNum: 9 }},
+          { type: "NAME", start: { column: 5, lineNum: 9 }, end: { column: 6, lineNum: 9 }},
+          { type: "EQUAL", start: { column: 7, lineNum: 9 }, end: { column: 8, lineNum: 9 }},
+          { type: "NUMBER", start: { column: 9, lineNum: 9 }, end: { column: 10, lineNum: 9 }},
+          { type: "NEWLINE", start: { column: 10, lineNum: 9 }, end: { column: 10, lineNum: 9 }},
+          { type: "DEDENT", start: { column: 0, lineNum: 9 }},
+          { type: "DEDENT", start: { column: 0, lineNum: 9 }},
+          { type: "NAME", start: { column: 0, lineNum: 10 }, end: { column: 2, lineNum: 10 }},
+          { type: "NUMBER", start: { column: 3, lineNum: 10 }, end: { column: 4, lineNum: 10 }},
+          { type: "COLON", start: { column: 4, lineNum: 10 }, end: { column: 5, lineNum: 10 }},
+          { type: "NEWLINE", start: { column: 5, lineNum: 10 }, end: { column: 5, lineNum: 10 }},
+          { type: "INDENT", start: { column: 2, lineNum: 11 }},
+          { type: "NAME", start: { column: 2, lineNum: 11 }, end: { column: 4, lineNum: 11 }},
+          { type: "NUMBER", start: { column: 5, lineNum: 11 }, end: { column: 6, lineNum: 11 }},
+          { type: "COLON", start: { column: 6, lineNum: 11 }, end: { column: 7, lineNum: 11 }},
+          { type: "NEWLINE", start: { column: 7, lineNum: 11 }, end: { column: 7, lineNum: 11 }},
+          { type: "INDENT", start: { column: 3, lineNum: 12 }},
+          { type: "NAME", start: { column: 3, lineNum: 12 }, end: { column: 8, lineNum: 12 }},
+          { type: "NUMBER", start: { column: 9, lineNum: 12 }, end: { column: 10, lineNum: 12 }},
+          { type: "COLON", start: { column: 10, lineNum: 12 }, end: { column: 11, lineNum: 12 }},
+          { type: "NEWLINE", start: { column: 11, lineNum: 12 }, end: { column: 11, lineNum: 12 }},
+          { type: "INDENT", start: { column: 8, lineNum: 13 }},
+          { type: "NAME", start: { column: 8, lineNum: 13 }, end: { column: 10, lineNum: 13 }},
+          { type: "NUMBER", start: { column: 11, lineNum: 13 }, end: { column: 12, lineNum: 13 }},
+          { type: "COLON", start: { column: 12, lineNum: 13 }, end: { column: 13, lineNum: 13 }},
+          { type: "NEWLINE", start: { column: 13, lineNum: 13 }, end: { column: 13, lineNum: 13 }},
+          { type: "INDENT", start: { column: 10, lineNum: 14 }},
+          { type: "NAME", start: { column: 10, lineNum: 14 }, end: { column: 11, lineNum: 14 }},
+          { type: "EQUAL", start: { column: 12, lineNum: 14 }, end: { column: 13, lineNum: 14 }},
+          { type: "NUMBER", start: { column: 14, lineNum: 14 }, end: { column: 15, lineNum: 14 }},
+          { type: "NEWLINE", start: { column: 15, lineNum: 14 }, end: { column: 15, lineNum: 14 }},
+          { type: "DEDENT", start: { column: 0, lineNum: 14 }},
+          { type: "DEDENT", start: { column: 0, lineNum: 14 }},
+          { type: "DEDENT", start: { column: 0, lineNum: 14 }},
+          { type: "DEDENT", start: { column: 0, lineNum: 14 }}
         ]
       );
     },
@@ -767,274 +774,288 @@ define([
     'operators': {
       'def d22(a, b, c=1, d=2): pass': function () {
         assertTokensEqual('def d22(a, b, c=1, d=2): pass', [
-          { token: "NAME", start: [0, 1], end: [3, 1] },
-          { token: "NAME", start: [4, 1], end: [7, 1] },
-          { token: "LPAR", start: [7, 1], end: [8, 1] },
-          { token: "NAME", start: [8, 1], end: [9, 1] },
-          { token: "COMMA", start: [9, 1], end: [10, 1] },
-          { token: "NAME", start: [11, 1], end: [12, 1] },
-          { token: "COMMA", start: [12, 1], end: [13, 1] },
-          { token: "NAME", start: [14, 1], end: [15, 1] },
-          { token: "EQUAL", start: [15, 1], end: [16, 1] },
-          { token: "NUMBER", start: [16, 1], end: [17, 1] },
-          { token: "COMMA", start: [17, 1], end: [18, 1] },
-          { token: "NAME", start: [19, 1], end: [20, 1] },
-          { token: "EQUAL", start: [20, 1], end: [21, 1] },
-          { token: "NUMBER", start: [21, 1], end: [22, 1] },
-          { token: "RPAR", start: [22, 1], end: [23, 1] },
-          { token: "COLON", start: [23, 1], end: [24, 1] },
-          { token: "NAME", start: [25, 1], end: [29, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NAME", start: { column: 4, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+          { type: "LPAR", start: { column: 7, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
+          { type: "NAME", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+          { type: "COMMA", start: { column: 9, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "NAME", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "COMMA", start: { column: 12, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "NAME", start: { column: 14, lineNum: 1 }, end: { column: 15, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 15, lineNum: 1 }, end: { column: 16, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 16, lineNum: 1 }, end: { column: 17, lineNum: 1 }},
+          { type: "COMMA", start: { column: 17, lineNum: 1 }, end: { column: 18, lineNum: 1 }},
+          { type: "NAME", start: { column: 19, lineNum: 1 }, end: { column: 20, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 20, lineNum: 1 }, end: { column: 21, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 21, lineNum: 1 }, end: { column: 22, lineNum: 1 }},
+          { type: "RPAR", start: { column: 22, lineNum: 1 }, end: { column: 23, lineNum: 1 }},
+          { type: "COLON", start: { column: 23, lineNum: 1 }, end: { column: 24, lineNum: 1 }},
+          { type: "NAME", start: { column: 25, lineNum: 1 }, end: { column: 29, lineNum: 1 }}
         ]);
       },
 
       'def d01v(a=1, *restt, **restd): pass': function () {
         assertTokensEqual('def d01v(a=1, *restt, **restd): pass', [
-          { token: "NAME", start: [0, 1], end: [3, 1] },
-          { token: "NAME", start: [4, 1], end: [8, 1] },
-          { token: "LPAR", start: [8, 1], end: [9, 1] },
-          { token: "NAME", start: [9, 1], end: [10, 1] },
-          { token: "EQUAL", start: [10, 1], end: [11, 1] },
-          { token: "NUMBER", start: [11, 1], end: [12, 1] },
-          { token: "COMMA", start: [12, 1], end: [13, 1] },
-          { token: "STAR", start: [14, 1], end: [15, 1] },
-          { token: "NAME", start: [15, 1], end: [20, 1] },
-          { token: "COMMA", start: [20, 1], end: [21, 1] },
-          { token: "DOUBLESTAR", start: [22, 1], end: [24, 1] },
-          { token: "NAME", start: [24, 1], end: [29, 1] },
-          { token: "RPAR", start: [29, 1], end: [30, 1] },
-          { token: "COLON", start: [30, 1], end: [31, 1] },
-          { token: "NAME", start: [32, 1], end: [36, 1] },
-          { token: "ENDMARKER", "lineNum": 1 }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NAME", start: { column: 4, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
+          { type: "LPAR", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+          { type: "NAME", start: { column: 9, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 10, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "COMMA", start: { column: 12, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "STAR", start: { column: 14, lineNum: 1 }, end: { column: 15, lineNum: 1 }},
+          { type: "NAME", start: { column: 15, lineNum: 1 }, end: { column: 20, lineNum: 1 }},
+          { type: "COMMA", start: { column: 20, lineNum: 1 }, end: { column: 21, lineNum: 1 }},
+          { type: "DOUBLESTAR", start: { column: 22, lineNum: 1 }, end: { column: 24, lineNum: 1 }},
+          { type: "NAME", start: { column: 24, lineNum: 1 }, end: { column: 29, lineNum: 1 }},
+          { type: "RPAR", start: { column: 29, lineNum: 1 }, end: { column: 30, lineNum: 1 }},
+          { type: "COLON", start: { column: 30, lineNum: 1 }, end: { column: 31, lineNum: 1 }},
+          { type: "NAME", start: { column: 32, lineNum: 1 }, end: { column: 36, lineNum: 1 }}
         ]);
       },
 
       "(x, y) != ({'a':1}, {'b':2})": function () {
         assertTokensEqual("(x, y) != ({'a':1}, {'b':2})", [
-          { token: "LPAR", start: [0, 1], end: [1, 1] },
-          { token: "NAME", start: [1, 1], end: [2, 1] },
-          { token: "COMMA", start: [2, 1], end: [3, 1] },
-          { token: "NAME", start: [4, 1], end: [5, 1] },
-          { token: "RPAR", start: [5, 1], end: [6, 1] },
-          { token: "NOTEQUAL", start: [7, 1], end: [9, 1] },
-          { token: "LPAR", start: [10, 1], end: [11, 1] },
-          { token: "LBRACE", start: [11, 1], end: [12, 1] },
-          { token: "STRING", start: [12, 1], end: [15, 1] },
-          { token: "COLON", start: [15, 1], end: [16, 1] },
-          { token: "NUMBER", start: [16, 1], end: [17, 1] },
-          { token: "RBRACE", start: [17, 1], end: [18, 1] },
-          { token: "COMMA", start: [18, 1], end: [19, 1] },
-          { token: "LBRACE", start: [20, 1], end: [21, 1] },
-          { token: "STRING", start: [21, 1], end: [24, 1] },
-          { token: "COLON", start: [24, 1], end: [25, 1] },
-          { token: "NUMBER", start: [25, 1], end: [26, 1] },
-          { token: "RBRACE", start: [26, 1], end: [27, 1] },
-          { token: "RPAR", start: [27, 1], end: [28, 1] }
+          { type: "LPAR", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "NAME", start: { column: 1, lineNum: 1 }, end: { column: 2, lineNum: 1 }},
+          { type: "COMMA", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NAME", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+          { type: "RPAR", start: { column: 5, lineNum: 1 }, end: { column: 6, lineNum: 1 }},
+          { type: "NOTEQUAL", start: { column: 7, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+          { type: "LPAR", start: { column: 10, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "LBRACE", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "STRING", start: { column: 12, lineNum: 1 }, end: { column: 15, lineNum: 1 }},
+          { type: "COLON", start: { column: 15, lineNum: 1 }, end: { column: 16, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 16, lineNum: 1 }, end: { column: 17, lineNum: 1 }},
+          { type: "RBRACE", start: { column: 17, lineNum: 1 }, end: { column: 18, lineNum: 1 }},
+          { type: "COMMA", start: { column: 18, lineNum: 1 }, end: { column: 19, lineNum: 1 }},
+          { type: "LBRACE", start: { column: 20, lineNum: 1 }, end: { column: 21, lineNum: 1 }},
+          { type: "STRING", start: { column: 21, lineNum: 1 }, end: { column: 24, lineNum: 1 }},
+          { type: "COLON", start: { column: 24, lineNum: 1 }, end: { column: 25, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 25, lineNum: 1 }, end: { column: 26, lineNum: 1 }},
+          { type: "RBRACE", start: { column: 26, lineNum: 1 }, end: { column: 27, lineNum: 1 }},
+          { type: "RPAR", start: { column: 27, lineNum: 1 }, end: { column: 28, lineNum: 1 }}
         ]);
       },
 
       'comparison': function () {
         assertTokensEqual('if 1 < 1 > 1 == 1 >= 1 <= 1 != 1 != 1 in 1 not in 1 is 1 is not 1: pass', [
-          { token: "NAME", start: [0, 1], end: [2, 1] },
-          { token: "NUMBER", start: [3, 1], end: [4, 1] },
-          { token: "LESS", start: [5, 1], end: [6, 1] },
-          { token: "NUMBER", start: [7, 1], end: [8, 1] },
-          { token: "GREATER", start: [9, 1], end: [10, 1] },
-          { token: "NUMBER", start: [11, 1], end: [12, 1] },
-          { token: "EQEQUAL", start: [13, 1], end: [15, 1] },
-          { token: "NUMBER", start: [16, 1], end: [17, 1] },
-          { token: "GREATEREQUAL", start: [18, 1], end: [20, 1] },
-          { token: "NUMBER", start: [21, 1], end: [22, 1] },
-          { token: "LESSEQUAL", start: [23, 1], end: [25, 1] },
-          { token: "NUMBER", start: [26, 1], end: [27, 1] },
-          { token: "NOTEQUAL", start: [28, 1], end: [30, 1] },
-          { token: "NUMBER", start: [31, 1], end: [32, 1] },
-          { token: "NOTEQUAL", start: [33, 1], end: [35, 1] },
-          { token: "NUMBER", start: [36, 1], end: [37, 1] },
-          { token: "NAME", start: [38, 1], end: [40, 1] },
-          { token: "NUMBER", start: [41, 1], end: [42, 1] },
-          { token: "NAME", start: [43, 1], end: [46, 1] },
-          { token: "NAME", start: [47, 1], end: [49, 1] },
-          { token: "NUMBER", start: [50, 1], end: [51, 1] },
-          { token: "NAME", start: [52, 1], end: [54, 1] },
-          { token: "NUMBER", start: [55, 1], end: [56, 1] },
-          { token: "NAME", start: [57, 1], end: [59, 1] },
-          { token: "NAME", start: [60, 1], end: [63, 1] },
-          { token: "NUMBER", start: [64, 1], end: [65, 1] },
-          { token: "COLON", start: [65, 1], end: [66, 1] },
-          { token: "NAME", start: [67, 1], end: [71, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 2, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 3, lineNum: 1 }, end: { column: 4, lineNum: 1 }},
+          { type: "LESS", start: { column: 5, lineNum: 1 }, end: { column: 6, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 7, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
+          { type: "GREATER", start: { column: 9, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+          { type: "EQEQUAL", start: { column: 13, lineNum: 1 }, end: { column: 15, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 16, lineNum: 1 }, end: { column: 17, lineNum: 1 }},
+          { type: "GREATEREQUAL", start: { column: 18, lineNum: 1 }, end: { column: 20, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 21, lineNum: 1 }, end: { column: 22, lineNum: 1 }},
+          { type: "LESSEQUAL", start: { column: 23, lineNum: 1 }, end: { column: 25, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 26, lineNum: 1 }, end: { column: 27, lineNum: 1 }},
+          { type: "NOTEQUAL", start: { column: 28, lineNum: 1 }, end: { column: 30, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 31, lineNum: 1 }, end: { column: 32, lineNum: 1 }},
+          { type: "NOTEQUAL", start: { column: 33, lineNum: 1 }, end: { column: 35, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 36, lineNum: 1 }, end: { column: 37, lineNum: 1 }},
+          { type: "NAME", start: { column: 38, lineNum: 1 }, end: { column: 40, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 41, lineNum: 1 }, end: { column: 42, lineNum: 1 }},
+          { type: "NAME", start: { column: 43, lineNum: 1 }, end: { column: 46, lineNum: 1 }},
+          { type: "NAME", start: { column: 47, lineNum: 1 }, end: { column: 49, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 50, lineNum: 1 }, end: { column: 51, lineNum: 1 }},
+          { type: "NAME", start: { column: 52, lineNum: 1 }, end: { column: 54, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 55, lineNum: 1 }, end: { column: 56, lineNum: 1 }},
+          { type: "NAME", start: { column: 57, lineNum: 1 }, end: { column: 59, lineNum: 1 }},
+          { type: "NAME", start: { column: 60, lineNum: 1 }, end: { column: 63, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 64, lineNum: 1 }, end: { column: 65, lineNum: 1 }},
+          { type: "COLON", start: { column: 65, lineNum: 1 }, end: { column: 66, lineNum: 1 }},
+          { type: "NAME", start: { column: 67, lineNum: 1 }, end: { column: 71, lineNum: 1 }}
         ]);
       },
 
       'binary': {
         'x = 1 & 1': function () {
           assertTokensEqual('x = 1 & 1', [
-            { token: "NAME", start: [0, 1], end: [1, 1] },
-            { token: "EQUAL", start: [2, 1], end: [3, 1] },
-            { token: "NUMBER", start: [4, 1], end: [5, 1] },
-            { token: "AMPER", start: [6, 1], end: [7, 1] },
-            { token: "NUMBER", start: [8, 1], end: [9, 1] }
+            { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+            { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+            { type: "AMPER", start: { column: 6, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }}
           ]);
         },
         'x = 1 ^ 1': function () {
           assertTokensEqual('x = 1 ^ 1', [
-            { token: "NAME", start: [0, 1], end: [1, 1] },
-            { token: "EQUAL", start: [2, 1], end: [3, 1] },
-            { token: "NUMBER", start: [4, 1], end: [5, 1] },
-            { token: "CIRCUMFLEX", start: [6, 1], end: [7, 1] },
-            { token: "NUMBER", start: [8, 1], end: [9, 1] }
+            { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+            { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+            { type: "CIRCUMFLEX", start: { column: 6, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }}
           ]);
         },
         'x = 1 | 1': function () {
           assertTokensEqual('x = 1 | 1', [
-            { token: "NAME", start: [0, 1], end: [1, 1] },
-            { token: "EQUAL", start: [2, 1], end: [3, 1] },
-            { token: "NUMBER", start: [4, 1], end: [5, 1] },
-            { token: "VBAR", start: [6, 1], end: [7, 1] },
-            { token: "NUMBER", start: [8, 1], end: [9, 1] }
+            { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+            { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+            { type: "VBAR", start: { column: 6, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }}
           ]);
         },
       },
 
       'shift': function () {
         assertTokensEqual('x = 1 << 1 >> 1', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [5, 1] },
-          { token: "LEFTSHIFT", start: [6, 1], end: [8, 1] },
-          { token: "NUMBER", start: [9, 1], end: [10, 1] },
-          { token: "RIGHTSHIFT", start: [11, 1], end: [13, 1] },
-          { token: "NUMBER", start: [14, 1], end: [15, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+          { type: "LEFTSHIFT", start: { column: 6, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 9, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "RIGHTSHIFT", start: { column: 11, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 14, lineNum: 1 }, end: { column: 15, lineNum: 1 }}
         ]);
       },
 
       'additive': function () {
         assertTokensEqual('x = 1 - 1 + 1 - 1 + 1', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [5, 1] },
-          { token: "MINUS", start: [6, 1], end: [7, 1] },
-          { token: "NUMBER", start: [8, 1], end: [9, 1] },
-          { token: "PLUS", start: [10, 1], end: [11, 1] },
-          { token: "NUMBER", start: [12, 1], end: [13, 1] },
-          { token: "MINUS", start: [14, 1], end: [15, 1] },
-          { token: "NUMBER", start: [16, 1], end: [17, 1] },
-          { token: "PLUS", start: [18, 1], end: [19, 1] },
-          { token: "NUMBER", start: [20, 1], end: [21, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+          { type: "MINUS", start: { column: 6, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+          { type: "PLUS", start: { column: 10, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 12, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "MINUS", start: { column: 14, lineNum: 1 }, end: { column: 15, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 16, lineNum: 1 }, end: { column: 17, lineNum: 1 }},
+          { type: "PLUS", start: { column: 18, lineNum: 1 }, end: { column: 19, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 20, lineNum: 1 }, end: { column: 21, lineNum: 1 }}
         ]);
       },
 
       'multiplicative': function () {
         assertTokensEqual('x = 1 / 1 * 1 % 1', [
-          { token: "NAME", start: [0, 1], end: [1, 1] },
-          { token: "EQUAL", start: [2, 1], end: [3, 1] },
-          { token: "NUMBER", start: [4, 1], end: [5, 1] },
-          { token: "SLASH", start: [6, 1], end: [7, 1] },
-          { token: "NUMBER", start: [8, 1], end: [9, 1] },
-          { token: "STAR", start: [10, 1], end: [11, 1] },
-          { token: "NUMBER", start: [12, 1], end: [13, 1] },
-          { token: "PERCENT", start: [14, 1], end: [15, 1] },
-          { token: "NUMBER", start: [16, 1], end: [17, 1] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+          { type: "SLASH", start: { column: 6, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+          { type: "STAR", start: { column: 10, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 12, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+          { type: "PERCENT", start: { column: 14, lineNum: 1 }, end: { column: 15, lineNum: 1 }},
+          { type: "NUMBER", start: { column: 16, lineNum: 1 }, end: { column: 17, lineNum: 1 }}
         ]);
       },
 
       'unary': {
         'x = ~1 ^ 1 & 1 | 1 & 1 ^ -1': function () {
           assertTokensEqual('x = ~1 ^ 1 & 1 | 1 & 1 ^ -1', [
-            { token: "NAME", start: [0, 1], end: [1, 1] },
-            { token: "EQUAL", start: [2, 1], end: [3, 1] },
-            { token: "TILDE", start: [4, 1], end: [5, 1] },
-            { token: "NUMBER", start: [5, 1], end: [6, 1] },
-            { token: "CIRCUMFLEX", start: [7, 1], end: [8, 1] },
-            { token: "NUMBER", start: [9, 1], end: [10, 1] },
-            { token: "AMPER", start: [11, 1], end: [12, 1] },
-            { token: "NUMBER", start: [13, 1], end: [14, 1] },
-            { token: "VBAR", start: [15, 1], end: [16, 1] },
-            { token: "NUMBER", start: [17, 1], end: [18, 1] },
-            { token: "AMPER", start: [19, 1], end: [20, 1] },
-            { token: "NUMBER", start: [21, 1], end: [22, 1] },
-            { token: "CIRCUMFLEX", start: [23, 1], end: [24, 1] },
-            { token: "MINUS", start: [25, 1], end: [26, 1] },
-            { token: "NUMBER", start: [26, 1], end: [27, 1] }
+            { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+            { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+            { type: "TILDE", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 5, lineNum: 1 }, end: { column: 6, lineNum: 1 }},
+            { type: "CIRCUMFLEX", start: { column: 7, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 9, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+            { type: "AMPER", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 13, lineNum: 1 }, end: { column: 14, lineNum: 1 }},
+            { type: "VBAR", start: { column: 15, lineNum: 1 }, end: { column: 16, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 17, lineNum: 1 }, end: { column: 18, lineNum: 1 }},
+            { type: "AMPER", start: { column: 19, lineNum: 1 }, end: { column: 20, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 21, lineNum: 1 }, end: { column: 22, lineNum: 1 }},
+            { type: "CIRCUMFLEX", start: { column: 23, lineNum: 1 }, end: { column: 24, lineNum: 1 }},
+            { type: "MINUS", start: { column: 25, lineNum: 1 }, end: { column: 26, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 26, lineNum: 1 }, end: { column: 27, lineNum: 1 }}
           ]);
         },
         'x = -1*1/1 + 1*1 - ---1*1': function () {
           assertTokensEqual('x = -1*1/1 + 1*1 - ---1*1', [
-            { token: "NAME", start: [0, 1], end: [1, 1] },
-            { token: "EQUAL", start: [2, 1], end: [3, 1] },
-            { token: "MINUS", start: [4, 1], end: [5, 1] },
-            { token: "NUMBER", start: [5, 1], end: [6, 1] },
-            { token: "STAR", start: [6, 1], end: [7, 1] },
-            { token: "NUMBER", start: [7, 1], end: [8, 1] },
-            { token: "SLASH", start: [8, 1], end: [9, 1] },
-            { token: "NUMBER", start: [9, 1], end: [10, 1] },
-            { token: "PLUS", start: [11, 1], end: [12, 1] },
-            { token: "NUMBER", start: [13, 1], end: [14, 1] },
-            { token: "STAR", start: [14, 1], end: [15, 1] },
-            { token: "NUMBER", start: [15, 1], end: [16, 1] },
-            { token: "MINUS", start: [17, 1], end: [18, 1] },
-            { token: "MINUS", start: [19, 1], end: [20, 1] },
-            { token: "MINUS", start: [20, 1], end: [21, 1] },
-            { token: "MINUS", start: [21, 1], end: [22, 1] },
-            { token: "NUMBER", start: [22, 1], end: [23, 1] },
-            { token: "STAR", start: [23, 1], end: [24, 1] },
-            { token: "NUMBER", start: [24, 1], end: [25, 1] }
+            { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+            { type: "EQUAL", start: { column: 2, lineNum: 1 }, end: { column: 3, lineNum: 1 }},
+            { type: "MINUS", start: { column: 4, lineNum: 1 }, end: { column: 5, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 5, lineNum: 1 }, end: { column: 6, lineNum: 1 }},
+            { type: "STAR", start: { column: 6, lineNum: 1 }, end: { column: 7, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 7, lineNum: 1 }, end: { column: 8, lineNum: 1 }},
+            { type: "SLASH", start: { column: 8, lineNum: 1 }, end: { column: 9, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 9, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+            { type: "PLUS", start: { column: 11, lineNum: 1 }, end: { column: 12, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 13, lineNum: 1 }, end: { column: 14, lineNum: 1 }},
+            { type: "STAR", start: { column: 14, lineNum: 1 }, end: { column: 15, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 15, lineNum: 1 }, end: { column: 16, lineNum: 1 }},
+            { type: "MINUS", start: { column: 17, lineNum: 1 }, end: { column: 18, lineNum: 1 }},
+            { type: "MINUS", start: { column: 19, lineNum: 1 }, end: { column: 20, lineNum: 1 }},
+            { type: "MINUS", start: { column: 20, lineNum: 1 }, end: { column: 21, lineNum: 1 }},
+            { type: "MINUS", start: { column: 21, lineNum: 1 }, end: { column: 22, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 22, lineNum: 1 }, end: { column: 23, lineNum: 1 }},
+            { type: "STAR", start: { column: 23, lineNum: 1 }, end: { column: 24, lineNum: 1 }},
+            { type: "NUMBER", start: { column: 24, lineNum: 1 }, end: { column: 25, lineNum: 1 }}
           ]);
         },
       },
 
       'selector': function () {
         assertTokensEqual("import sys, time\nx = sys.modules['time'].time()", [
-          { token: "NAME", start: [0, 1], end: [6, 1] },
-          { token: "NAME", start: [7, 1], end: [10, 1] },
-          { token: "COMMA", start: [10, 1], end: [11, 1] },
-          { token: "NAME", start: [12, 1], end: [16, 1] },
-          { token: "NEWLINE", start: [16, 1], end: [16, 1] },
-          { token: "NAME", start: [0, 2], end: [1, 2] },
-          { token: "EQUAL", start: [2, 2], end: [3, 2] },
-          { token: "NAME", start: [4, 2], end: [7, 2] },
-          { token: "DOT", start: [7, 2], end: [8, 2] },
-          { token: "NAME", start: [8, 2], end: [15, 2] },
-          { token: "LSQB", start: [15, 2], end: [16, 2] },
-          { token: "STRING", start: [16, 2], end: [22, 2] },
-          { token: "RSQB", start: [22, 2], end: [23, 2] },
-          { token: "DOT", start: [23, 2], end: [24, 2] },
-          { token: "NAME", start: [24, 2], end: [28, 2] },
-          { token: "LPAR", start: [28, 2], end: [29, 2] },
-          { token: "RPAR", start: [29, 2], end: [30, 2] }
+          { type: "NAME", start: { column: 0, lineNum: 1 }, end: { column: 6, lineNum: 1 }},
+          { type: "NAME", start: { column: 7, lineNum: 1 }, end: { column: 10, lineNum: 1 }},
+          { type: "COMMA", start: { column: 10, lineNum: 1 }, end: { column: 11, lineNum: 1 }},
+          { type: "NAME", start: { column: 12, lineNum: 1 }, end: { column: 16, lineNum: 1 }},
+          { type: "NEWLINE", start: { column: 16, lineNum: 1 }, end: { column: 16, lineNum: 1 }},
+          { type: "NAME", start: { column: 0, lineNum: 2 }, end: { column: 1, lineNum: 2 }},
+          { type: "EQUAL", start: { column: 2, lineNum: 2 }, end: { column: 3, lineNum: 2 }},
+          { type: "NAME", start: { column: 4, lineNum: 2 }, end: { column: 7, lineNum: 2 }},
+          { type: "DOT", start: { column: 7, lineNum: 2 }, end: { column: 8, lineNum: 2 }},
+          { type: "NAME", start: { column: 8, lineNum: 2 }, end: { column: 15, lineNum: 2 }},
+          { type: "LSQB", start: { column: 15, lineNum: 2 }, end: { column: 16, lineNum: 2 }},
+          { type: "STRING", start: { column: 16, lineNum: 2 }, end: { column: 22, lineNum: 2 }},
+          { type: "RSQB", start: { column: 22, lineNum: 2 }, end: { column: 23, lineNum: 2 }},
+          { type: "DOT", start: { column: 23, lineNum: 2 }, end: { column: 24, lineNum: 2 }},
+          { type: "NAME", start: { column: 24, lineNum: 2 }, end: { column: 28, lineNum: 2 }},
+          { type: "LPAR", start: { column: 28, lineNum: 2 }, end: { column: 29, lineNum: 2 }},
+          { type: "RPAR", start: { column: 29, lineNum: 2 }, end: { column: 30, lineNum: 2 }}
         ]);
       }
     },
 
     '@staticmethod\ndef foo(): pass': function () {
       assertTokensEqual('@staticmethod\ndef foo(): pass', [
-        { token: "AT", start: [0, 1], end: [1, 1] },
-        { token: "NAME", start: [1, 1], end: [13, 1] },
-        { token: "NEWLINE", start: [13, 1], end: [13, 1] },
-        { token: "NAME", start: [0, 2], end: [3, 2] },
-        { token: "NAME", start: [4, 2], end: [7, 2] },
-        { token: "LPAR", start: [7, 2], end: [8, 2] },
-        { token: "RPAR", start: [8, 2], end: [9, 2] },
-        { token: "COLON", start: [9, 2], end: [10, 2] },
-        { token: "NAME", start: [11, 2], end: [15, 2] }
+        { type: "AT", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+        { type: "NAME", start: { column: 1, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+        { type: "NEWLINE", start: { column: 13, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+        { type: "NAME", start: { column: 0, lineNum: 2 }, end: { column: 3, lineNum: 2 }},
+        { type: "NAME", start: { column: 4, lineNum: 2 }, end: { column: 7, lineNum: 2 }},
+        { type: "LPAR", start: { column: 7, lineNum: 2 }, end: { column: 8, lineNum: 2 }},
+        { type: "RPAR", start: { column: 8, lineNum: 2 }, end: { column: 9, lineNum: 2 }},
+        { type: "COLON", start: { column: 9, lineNum: 2 }, end: { column: 10, lineNum: 2 }},
+        { type: "NAME", start: { column: 11, lineNum: 2 }, end: { column: 15, lineNum: 2 }}
       ]);
     },
 
     '@staticmethod\ndef foo(x:1)->1: pass': function () {
       assertTokensEqual('@staticmethod\ndef foo(x:1)->1: pass', [
-        { token: "AT", start: [0, 1], end: [1, 1] },
-        { token: "NAME", start: [1, 1], end: [13, 1] },
-        { token: "NEWLINE", start: [13, 1], end: [13, 1] },
-        { token: "NAME", start: [0, 2], end: [3, 2] },
-        { token: "NAME", start: [4, 2], end: [7, 2] },
-        { token: "LPAR", start: [7, 2], end: [8, 2] },
-        { token: "NAME", start: [8, 2], end: [9, 2] },
-        { token: "COLON", start: [9, 2], end: [10, 2] },
-        { token: "NUMBER", start: [10, 2], end: [11, 2] },
-        { token: "RPAR", start: [11, 2], end: [12, 2] },
-        { token: "RARROW", start: [12, 2], end: [14, 2] },
-        { token: "NUMBER", start: [14, 2], end: [15, 2] },
-        { token: "COLON", start: [15, 2], end: [16, 2] },
-        { token: "NAME", start: [17, 2], end: [21, 2] }
+        { type: "AT", start: { column: 0, lineNum: 1 }, end: { column: 1, lineNum: 1 }},
+        { type: "NAME", start: { column: 1, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+        { type: "NEWLINE", start: { column: 13, lineNum: 1 }, end: { column: 13, lineNum: 1 }},
+        { type: "NAME", start: { column: 0, lineNum: 2 }, end: { column: 3, lineNum: 2 }},
+        { type: "NAME", start: { column: 4, lineNum: 2 }, end: { column: 7, lineNum: 2 }},
+        { type: "LPAR", start: { column: 7, lineNum: 2 }, end: { column: 8, lineNum: 2 }},
+        { type: "NAME", start: { column: 8, lineNum: 2 }, end: { column: 9, lineNum: 2 }},
+        { type: "COLON", start: { column: 9, lineNum: 2 }, end: { column: 10, lineNum: 2 }},
+        { type: "NUMBER", start: { column: 10, lineNum: 2 }, end: { column: 11, lineNum: 2 }},
+        { type: "RPAR", start: { column: 11, lineNum: 2 }, end: { column: 12, lineNum: 2 }},
+        { type: "RARROW", start: { column: 12, lineNum: 2 }, end: { column: 14, lineNum: 2 }},
+        { type: "NUMBER", start: { column: 14, lineNum: 2 }, end: { column: 15, lineNum: 2 }},
+        { type: "COLON", start: { column: 15, lineNum: 2 }, end: { column: 16, lineNum: 2 }},
+        { type: "NAME", start: { column: 17, lineNum: 2 }, end: { column: 21, lineNum: 2 }}
+      ]);
+    },
+
+    'myList[1:2, ..., 0]': function () {
+      assertTokensEqual('myList[1:2, ..., 0]', [
+				{"type":"NAME","start":{"column":0,"lineNum":1},"end":{"column":6,"lineNum":1},"string":"myList"},
+				{"type":"LSQB","start":{"column":6,"lineNum":1},"end":{"column":7,"lineNum":1},"string":"["},
+				{"type":"NUMBER","start":{"column":7,"lineNum":1},"end":{"column":8,"lineNum":1},"string":"1"},
+				{"type":"COLON","start":{"column":8,"lineNum":1},"end":{"column":9,"lineNum":1},"string":":"},
+				{"type":"NUMBER","start":{"column":9,"lineNum":1},"end":{"column":10,"lineNum":1},"string":"2"},
+				{"type":"COMMA","start":{"column":10,"lineNum":1},"end":{"column":11,"lineNum":1},"string":","},
+				{"type":"ELLIPSIS","start":{"column":12,"lineNum":1},"end":{"column":15,"lineNum":1},"string":"..."},
+				{"type":"COMMA","start":{"column":15,"lineNum":1},"end":{"column":16,"lineNum":1},"string":","},
+				{"type":"NUMBER","start":{"column":17,"lineNum":1},"end":{"column":18,"lineNum":1},"string":"0"},
+				{"type":"RSQB","start":{"column":18,"lineNum":1},"end":{"column":19,"lineNum":1},"string":"]"}
       ]);
     }
   });
