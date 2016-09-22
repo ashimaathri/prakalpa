@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Prakalpa Class: DFA</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cosmo.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">Prakalpa</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="namespaces.list.html" class="dropdown-toggle" data-toggle="dropdown">Namespaces<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="prakalpa.html">prakalpa</a></li><li><a href="prakalpa.parser.html">prakalpa.parser</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="prakalpa.module_utils.html">prakalpa.utils</a></li><li><a href="prakalpa.parser.module_MetaGrammar.html">prakalpa.parser.MetaGrammar</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="prakalpa.Exceptions.html">prakalpa.Exceptions</a></li><li><a href="prakalpa.Exceptions.AssertionError.html">prakalpa.Exceptions.AssertionError</a></li><li><a href="prakalpa.Exceptions.InvalidNameLabel.html">prakalpa.Exceptions.InvalidNameLabel</a></li><li><a href="prakalpa.Exceptions.InvalidOneCharLabel.html">prakalpa.Exceptions.InvalidOneCharLabel</a></li><li><a href="prakalpa.Exceptions.InvalidThreeCharLabel.html">prakalpa.Exceptions.InvalidThreeCharLabel</a></li><li><a href="prakalpa.Exceptions.InvalidTwoCharLabel.html">prakalpa.Exceptions.InvalidTwoCharLabel</a></li><li><a href="prakalpa.Exceptions.LeftRecursion.html">prakalpa.Exceptions.LeftRecursion</a></li><li><a href="prakalpa.Exceptions.SyntaxError.html">prakalpa.Exceptions.SyntaxError</a></li><li><a href="prakalpa.Exceptions.TokenizeError.html">prakalpa.Exceptions.TokenizeError</a></li><li><a href="prakalpa.parser.DFA.html">prakalpa.parser.DFA</a></li><li><a href="prakalpa.parser.DFAState.html">prakalpa.parser.DFAState</a></li><li><a href="prakalpa.parser.NFA.html">prakalpa.parser.NFA</a></li><li><a href="prakalpa.parser.Parser.html">prakalpa.parser.Parser</a></li><li><a href="prakalpa.parser.ParserGenerator.html">prakalpa.parser.ParserGenerator</a></li><li><a href="prakalpa.parser.ParseTreeNode.html">prakalpa.parser.ParseTreeNode</a></li><li><a href="prakalpa.parser.Stack.html">prakalpa.parser.Stack</a></li><li><a href="prakalpa.Token.html">prakalpa.Token</a></li><li><a href="prakalpa.Tokenizer.html">prakalpa.Tokenizer</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-8">
+	
+		<div id="main">
+			
+
+	<h1 class="page-title">Class: DFA</h1>
+<section>
+
+<header>
+    
+        <h2>
+            <span class="ancestors"><a href="prakalpa.html">prakalpa</a><a href="prakalpa.parser.html">.parser</a>.</span>
+        
+        DFA
+        </h2>
+        
+    
+</header>
+
+
+<article>
+    <div class="container-overview">
+    
+        
+<hr>
+<dt>
+    <h4 class="name" id="DFA"><span class="type-signature"></span>new DFA(opts)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Represents a DFA (deterministic finite automaton)</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>opts</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>type</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>NonTerminal constant that represents this DFA</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>nfa</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="prakalpa.parser.NFA.html">prakalpa.parser.NFA</a></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The NFA from which the DFA must be constructed</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>Array<prakalpa.parser.DFAState></code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>opts.states - The DFA states of this DFA. This only needs to be supplied at parser generation time. Every other time, it is constructed programmatically.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>Object.<String, Boolean></code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>opts.firstSet - A dict (used for fast membership checks) with all the labels of the firstSet as keys. The value doesn't matter. Only needs to be supplied at parser generation time.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="parser_dfa.js.html">parser/dfa.js</a>,
+				 <a href="parser_dfa.js.html#sunlight-1-line-11">line 11</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        <dl>
+            
+<hr>
+<dt class="name" id="states">
+    <h4 id="states"><span class="type-signature"></span>states<span class="type-signature"> :Array.&lt;<a href="prakalpa.parser.DFAState.html">prakalpa.parser.DFAState</a>></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>States of the DFA. The first state at index 0 is always the start state.</p>
+    </div>
+    
+
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">Array.&lt;<a href="prakalpa.parser.DFAState.html">prakalpa.parser.DFAState</a>></span>
+
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="parser_dfa.js.html">parser/dfa.js</a>,
+				 <a href="parser_dfa.js.html#sunlight-1-line-24">line 24</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
+        </dl>
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<hr>
+<dt>
+    <h4 class="name" id="_addState"><span class="type-signature">&lt;private> </span>_addState(dfaState)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Adds a DFA state to the list only if not already present.</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>dfaState</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="prakalpa.parser.DFAState.html">prakalpa.parser.DFAState</a></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>DFA state to add to list</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="parser_dfa.js.html">parser/dfa.js</a>,
+				 <a href="parser_dfa.js.html#sunlight-1-line-84">line 84</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>newState? - True if new state, false if state is already in the list</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Boolean</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="_generateDFA"><span class="type-signature">&lt;private> </span>_generateDFA(state)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Generates DFAs recursively, starting at the start state that has already been constructed in the constructor, and visiting the nfa nodes reachable from all the states in the start state<br>Based on 3.7.1 Conversion of an NFA to a DFA from the <a href="http://www.informatik.uni-bremen.de/agbkb/lehre/ccfl/Material/ALSUdragonbook.pdf">Dragon Book 2nd Edition</a></p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>state</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="prakalpa.parser.DFAState.html">prakalpa.parser.DFAState</a></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>DFA state to start discovery from</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="parser_dfa.js.html">parser/dfa.js</a>,
+				 <a href="parser_dfa.js.html#sunlight-1-line-56">line 56</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="calcFirstSet"><span class="type-signature"></span>calcFirstSet(dfaGrammar)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Calculates the firstSet of this DFA. From the Dragon Book:</p>
+<blockquote>
+<p>We define <code>FIRST (a)</code> to be the set of terminals that appear as the first symbols of one or more strings of terminals generated from <code>a</code></p>
+</blockquote>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>dfaGrammar</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object.&lt;String, <a href="prakalpa.parser.DFA.html">prakalpa.parser.DFA</a>></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A map containing all the DFAs for this grammar</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="parser_dfa.js.html">parser/dfa.js</a>,
+				 <a href="parser_dfa.js.html#sunlight-1-line-107">line 107</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Throws:</h5>
+    
+            
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If the grammar is left recursive.</p>
+        </div>
+    </dt>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type"><a href="prakalpa.Exceptions.LeftRecursion.html">prakalpa.Exceptions.LeftRecursion</a></span>
+
+
+
+            </dd>
+        </dl>
+    </dt>
+</dl>
+
+
+        
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    <p>firstSet - A dict (used for fast membership checks) with all the labels of the firstSet as keys. The value doesn't matter.</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object.&lt;String, Boolean></span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="constructFollowSet"><span class="type-signature"></span>constructFollowSet(dfaGrammar)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        <p>Constructs the transition table for each state in this DFA</p>
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>dfaGrammar</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object.&lt;String, <a href="prakalpa.parser.DFA.html">prakalpa.parser.DFA</a>></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>A map containing all the DFAs for this grammar</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source method-doc-label method-doc-details-label">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="parser_dfa.js.html">parser/dfa.js</a>,
+				 <a href="parser_dfa.js.html#sunlight-1-line-140">line 140</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        </dl>
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+		<div class="col-md-3">
+			<div id="toc" class="col-md-3 hidden-xs hidden-sm hidden-md"></div>
+		</div>
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+
+	<span class="copyright">
+	DocStrap Copyright © 2012-2015 The contributors to the JSDoc3 and DocStrap projects.
+	</span>
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.1</a>
+	
+		on Wed Sep 21st 2016
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>
