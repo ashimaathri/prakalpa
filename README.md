@@ -4,4 +4,5 @@ A Python to JavaScript compiler in JavaScript.
 
 *In development*
 
-[Latest Demo](http://ashimaathri.github.io/prakalpa/)
+[Latest Demo](http://ashimaathri.github.io/prakalpa/)  
+[API Docs](http://ashimaathri.github.io/prakalpa/docs/index.html)
