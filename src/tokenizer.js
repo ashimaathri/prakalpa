@@ -584,7 +584,7 @@ define([
           throw new Exceptions.TokenizeError({
             message: Errors.LINECONT,
             type: Tokens.ERRORTOKEN,
-            start: this._startOfToken
+            start: { column: 0, lineNum: this._lineNum}
           });
         }
         this._contLine = true;
@@ -742,7 +742,7 @@ define([
             throw new Exceptions.TokenizeError({
               message: Errors.TOODEEP,
               type: Tokens.ERRORTOKEN,
-              start: this._startOfToken
+              start: { column: 0, lineNum: this._lineNum}
             });
           }
           this._pending++;
@@ -756,7 +756,7 @@ define([
             throw new Exceptions.TokenizeError({
               message: Errors.DEDENT,
               type: Tokens.ERRORTOKEN,
-              start: this._startOfToken
+              start: { column: 0, lineNum: this._lineNum}
             });
           }
         }

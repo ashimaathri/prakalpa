@@ -81,7 +81,7 @@ define([
       assertError('def k(x):\n    x += 2\n  x += 5\n', {
         message: 'No matching outer block for dedent',
         type: 'ERRORTOKEN',
-        lineNum: 3,
+        start: { column: 0, lineNum: 3 }
       });
     },
 
