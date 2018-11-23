@@ -5,7 +5,6 @@
     [clojure.spec.alpha :as spec]
     [cljs.test :refer-macros [are is deftest]]
     [clojure.test.check.clojure-test :refer-macros [defspec]]
-    [clojure.test.check :as tc]
     [clojure.test.check.generators :as gen]
     [clojure.test.check.properties :as prop :include-macros true]))
 
