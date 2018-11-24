@@ -1,6 +1,7 @@
 (ns prakalpa.tokenizer.indentation-test
   (:require 
     [prakalpa.tokenizer.indentation :as indentation]
+    [prakalpa.exceptions :as exceptions]
     [cljs.test :refer-macros [are is deftest]]
     [clojure.test.check.clojure-test :refer-macros [defspec]]
     [clojure.test.check.generators :as gen]
@@ -12,19 +13,21 @@
          {:indentation-stack '(3 2 0) :pending 2}
          (indentation/track "   def abc():" '(2 0) 1))
       "Increments pending by 1 and pushes new indent to stack")
-    (is (=
-         "TOODEEP Error"
-         (let [deeply-indented (apply str (concat (take 99 (repeat " ")) "def abc():"))]
-           (indentation/track deeply-indented '(2 0) 1)))
+    (is (let [deeply-indented (apply str (concat (take 99 (repeat " ")) "def"))]
+          (try
+            (indentation/track deeply-indented '(2 0) 1)
+            (catch exceptions/ParseError error
+              (= "Too many indentation levels" (.. error -message)))))
         "Throws error if size of indentation exceeds max size"))
   (deftest dedent
     (is (=
          {:indentation-stack '(2 1 0) :pending 2}
          (indentation/track "  def abc():" '(7 6 5 4 3 2 1 0) 7))
         "Decrements pending by number of dedents and pops the dedents from the stack")
-    (is (=
-         "DEDENT Error"
-         (indentation/track "  def abc():" '(4 1 0) 2))
+    (is (try
+          (indentation/track "  def abc():" '(4 1 0) 2)
+          (catch exceptions/ParseError error
+            (= "No matching outer block for dedent" (.. error -message))))
         "Throws error if size of current indent doesn't match most recent indent after stack pops"))
   (deftest no-indent-or-dedent
     (is (=

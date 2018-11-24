@@ -1,4 +1,7 @@
-(ns prakalpa.tokenizer.indentation)
+(ns prakalpa.tokenizer.indentation
+  (:require
+    [prakalpa.exceptions :as exceptions]
+    [prakalpa.constants.error-messages :as error-messages]))
 
 (defn compute-indentation
   "Returns the total number of spaces preceding the first non-blank character
@@ -18,7 +21,7 @@
   [indent indentation-stack pending]
   (let [max-indent-level 100]
     (if (>= (inc indent) max-indent-level)
-      "TOODEEP Error"
+      (throw (exceptions/ParseError. error-messages/too-deep))
       {:pending (inc pending)
        :indentation-stack (conj indentation-stack indent)})))
 
@@ -31,7 +34,7 @@
   [indent indentation-stack pending]
   (let [[dedents dedented-stack] (split-with #(< indent %) indentation-stack)] 
     (if (not= indent (first dedented-stack))
-      "DEDENT Error"
+      (throw (exceptions/ParseError. error-messages/dedent))
       {:pending (- pending (count dedents))
        :indentation-stack dedented-stack})))
 
