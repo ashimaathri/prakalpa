@@ -6,3 +6,6 @@
   [line]
   (let [first-non-space-char (first (drop-while #(= " " %) line))]
     (or (= first-non-space-char "#") (= first-non-space-char "\n"))))
+
+; `start` and `end` are of the form {:line-num :column} and `value` is a string
+(deftype token [start end value] Object)
