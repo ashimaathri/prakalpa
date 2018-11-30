@@ -14,28 +14,28 @@
   (count (take-while #(= " " %) line)))
   
 (defn process-indent
-  "Increments `pending` count by 1 and pushes current indent onto
+  "Increments `indent-level` count by 1 and pushes current indent onto
   `indentation-stack`.
   Throws exception if `indent` has exceeded the maximum allowed indentation.
-  Returns hashmap with updated `pending` and `indentation-stack`."
-  [indent indentation-stack pending]
+  Returns hashmap with updated `indent-level` and `indentation-stack`."
+  [indent indentation-stack indent-level]
   (let [max-indent-level 100]
     (if (>= (inc indent) max-indent-level)
       (throw (exceptions/ParseError. error-messages/toodeep))
-      {:pending (inc pending)
+      {:indent-level (inc indent-level)
        :indentation-stack (conj indentation-stack indent)})))
 
 (defn process-dedent
-  "Decrements `pending` count by number of dedents and pops matching indents
-  from `indentation-stack`.
+  "Decrements `indent-level` count by number of dedents and pops matching
+  indents from `indentation-stack`.
   Throws exception if most recent indentation level does not match current
   indent.
-  Returns hashmap with updated `pending` and `indentation-stack`."
-  [indent indentation-stack pending]
+  Returns hashmap with updated `indent-level` and `indentation-stack`."
+  [indent indentation-stack indent-level]
   (let [[dedents dedented-stack] (split-with #(< indent %) indentation-stack)] 
     (if (not= indent (first dedented-stack))
       (throw (exceptions/ParseError. error-messages/dedent))
-      {:pending (- pending (count dedents))
+      {:indent-level (- indent-level (count dedents))
        :indentation-stack dedented-stack})))
 
 
@@ -48,16 +48,16 @@
 (defn track
   "Used to keep track of indentation in the python script. Algorithm based on
   [Tokens and Python's Lexical Structure](
-  https://www.ics.uci.edu/~pattis/ICS-31/lectures/tokens.pdf).
-  Returns hashmap with updated `pending` count and `indentation-stack`."
-  [line indentation-stack pending]
+  https://www.ics.uci.edu/~pattis/ICS-31/lectures/tokens.pdf).  Returns hashmap
+  with updated `indent-level` count and `indentation-stack`."
+  [line indentation-stack indent-level]
   (let [current-indent (compute-indentation line)
         most-recent-indent (first indentation-stack)]
     (cond
       (> current-indent most-recent-indent) (process-indent current-indent
                                                             indentation-stack
-                                                            pending)
+                                                            indent-level)
       (< current-indent most-recent-indent) (process-dedent current-indent
                                                             indentation-stack
-                                                            pending)
-      :else {:pending pending :indentation-stack indentation-stack})))
+                                                            indent-level)
+      :else {:indent-level indent-level :indentation-stack indentation-stack})))

@@ -10,9 +10,9 @@
 (deftest track
   (deftest indent
     (is (=
-         {:indentation-stack '(3 2 0) :pending 2}
+         {:indentation-stack '(3 2 0) :indent-level 2}
          (indentation/track "   def abc():" '(2 0) 1))
-      "Increments pending by 1 and pushes new indent to stack")
+      "Increments indent-level by 1 and pushes new indent to stack")
     (is (let [deeply-indented (apply str (concat (take 99 (repeat " ")) "def"))]
           (try
             (indentation/track deeply-indented '(2 0) 1)
@@ -21,9 +21,9 @@
         "Throws error if size of indentation exceeds max size"))
   (deftest dedent
     (is (=
-         {:indentation-stack '(2 1 0) :pending 2}
+         {:indentation-stack '(2 1 0) :indent-level 2}
          (indentation/track "  def abc():" '(7 6 5 4 3 2 1 0) 7))
-        "Decrements pending by number of dedents and pops the dedents from the stack")
+        "Decrements indent-level by number of dedents and pops the dedents from the stack")
     (is (try
           (indentation/track "  def abc():" '(4 1 0) 2)
           (catch exceptions/ParseError error
@@ -31,6 +31,6 @@
         "Throws error if size of current indent doesn't match most recent indent after stack pops"))
   (deftest no-indent-or-dedent
     (is (=
-         {:indentation-stack '(7 6 5 4 3 2 1 0) :pending 7}
+         {:indentation-stack '(7 6 5 4 3 2 1 0) :indent-level 7}
          (indentation/track "       def abc():" '(7 6 5 4 3 2 1 0) 7))
-        "Does not modify pending or stack")))
+        "Does not modify indent-level or stack")))
