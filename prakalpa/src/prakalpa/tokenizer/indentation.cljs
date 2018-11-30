@@ -21,7 +21,7 @@
   [indent indentation-stack pending]
   (let [max-indent-level 100]
     (if (>= (inc indent) max-indent-level)
-      (throw (exceptions/ParseError. error-messages/too-deep))
+      (throw (exceptions/ParseError. error-messages/toodeep))
       {:pending (inc pending)
        :indentation-stack (conj indentation-stack indent)})))
 
