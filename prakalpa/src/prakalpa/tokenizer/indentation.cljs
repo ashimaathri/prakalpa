@@ -50,7 +50,7 @@
   [Tokens and Python's Lexical Structure](
   https://www.ics.uci.edu/~pattis/ICS-31/lectures/tokens.pdf).  Returns hashmap
   with updated `indent-level` count and `indentation-stack`."
-  [line indentation-stack indent-level]
+  [line {:keys [indentation-stack indent-level]}]
   (let [current-indent (compute-indentation line)
         most-recent-indent (first indentation-stack)]
     (cond
